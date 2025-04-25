@@ -143,9 +143,9 @@ export default {
 
     let token = localStorage.getItem('token') || null
 
-    if(!token) {
-      window.location = ('/')
-    }
+    // if(!token) {
+    //   window.location = ('/')
+    // }
 
     function showOptions(){
 
