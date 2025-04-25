@@ -1,8 +1,8 @@
 {
   "dependencies": {
-    "bootstrap": "^5.3.4",
+    "bootstrap": "^5.3.5",
     "bootstrap-vue": "^2.23.1",
     "mailersend": "^2.2.0",
-    "vue": "^3.4.28"
+    "vue": "^3.4.29"
   }
 }
