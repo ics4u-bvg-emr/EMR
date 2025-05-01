@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import routes from './routes/index.js'; 
 
 dotenv.config();
 
@@ -16,7 +17,7 @@ app.use(cors());
 mongoose.connect(process.env.MONGODB_URI);
 
 //Routes 
-app.use('/api', ); // add routes here
+app.use('/api', routes);
 
 //Start server
 app.listen(port, () => {
