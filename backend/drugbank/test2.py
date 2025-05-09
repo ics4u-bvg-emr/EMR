@@ -20,7 +20,7 @@ from pymongo import MongoClient
 dotenv.load_dotenv()
 CONN_STRING = os.getenv('MONGODB_URI')
 client = MongoClient(CONN_STRING)
-col = client["EMR"]["Drugs"]
+col = client["EMR"]["drugs"]
 col.delete_many({})
 
 # ──── XML config ────
