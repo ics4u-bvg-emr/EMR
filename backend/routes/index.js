@@ -1,5 +1,5 @@
 import express from 'express';
-import patientRoutes from './appointments.js';
+import patientRoutes from './patients.js';
 import appointmentRoutes from './appointments.js';
 
 const router = express.Router();
