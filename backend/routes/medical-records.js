@@ -1,6 +1,6 @@
 import express from 'express';
 import mongoose from 'mongoose';
-import MedicalRecord from '../models/MedicalRecord';
+import MedicalRecord from '../models/MedicalRecord.js';
 
 const router = express.Router();
 const ObjectId = mongoose.Types.ObjectId;
