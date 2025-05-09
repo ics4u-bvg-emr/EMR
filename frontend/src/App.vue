@@ -25,6 +25,14 @@
         </li>
       </ul>
     </nav>
+    <nav>
+      <!-- declarative navigation -->
+      <router-link to="/" exact>Home</router-link>
+      <!-- you can add more links here -->
+    </nav>
+
+    <!-- this is where the matched component renders -->
+    <router-view />
     <div class="sidebar-footer">
       <router-link :to="user.route" class="user-link">
         <span class="icon footer-icon">
@@ -38,6 +46,7 @@
         </span>
         {{ user.name }}
       </router-link>
+      
     </div>
   </aside>
 </template>
@@ -52,7 +61,7 @@ export default {
     items: {
       type: Array,
       default: () => ([
-        { icon: 'fas fa-home', label: 'Home', route: '/' },
+        { icon: 'fas fa-home', label: 'Home', route: '/Home' },
         { svg: circleUserSvg, label: 'Profile', route: '/profile' },
         { svg: gearSvg, label: 'Settings', route: '/settings' },
         { icon: 'fas fa-sign-out-alt', label: 'Logout', route: '/logout' }
