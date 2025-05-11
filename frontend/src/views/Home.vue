@@ -1,6 +1,6 @@
 <template>
   <main class="home-screen">
-    <h2>Welcome to EMR</h2>
+    <h2>Welcome back, Doctor</h2>
     <p>This is your dashboard/home page. Add widgets, stats, whatever you like!</p>
   </main>
 </template>
