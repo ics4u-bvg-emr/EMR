@@ -18,5 +18,9 @@ export default {
 }
 .home-screen h2 {
   margin-bottom: 1rem;
+  font-size: 2.5rem;  /* Larger font size */
+  font-weight: bold;  /* Make it bold */
+  border-bottom: 2px solid #000;  /* Add a line underneath */
+  padding-bottom: 0.5rem;  /* Space between text and line */
 }
 </style>

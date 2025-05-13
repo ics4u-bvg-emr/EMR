@@ -1,8 +1,0 @@
-<nav>
-      <!-- declarative navigation -->
-      <router-link to="/" exact>Home</router-link>
-      <!-- you can add more links here -->
-    </nav>
-
-    <!-- this is where the matched component renders -->
-    <router-view />
