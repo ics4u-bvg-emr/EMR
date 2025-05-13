@@ -6,6 +6,9 @@
 import Sidebar from '@/components/sidebar.vue'
 import gearSvg from '@/components/gear.svg'
 import circleUserSvg from '@/components/circleuser.svg'
+import fileSvg from '@/components/file.svg'
+import calendarSvg from '@/components/calendar.svg'
+import graphSvg from '@/components/graph.svg'
 
 export default {
   name: 'App',
@@ -14,9 +17,9 @@ export default {
     return {
       menuItems: [
         { icon: 'fas fa-home', label: 'Home', route: '/' },
-        { icon: 'fas fa-file-medical-alt', label: 'Records', route: '/records' },
-        { icon: 'fas fa-calendar-alt', label: 'Appointments', route: '/appointments' },
-        { icon: 'fas fa-chart-line', label: 'Reports', route: '/reports' },
+        { svg: fileSvg, label: 'Records', route: '/records' },
+        { svg: calendarSvg, label: 'Appointments', route: '/appointments' },
+        { svg: graphSvg, label: 'Reports', route: '/reports' },
         { svg: gearSvg, label: 'Settings', route: '/settings' },
         { icon: 'fas fa-sign-out-alt', label: 'Logout', route: '/logout' }
       ],

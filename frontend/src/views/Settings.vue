@@ -1,7 +1,7 @@
 <template>
   <main class="home-screen">
-    <h2>Welcome back, Doctor</h2>
-    <p>This is your dashboard/home page. Add widgets, stats, whatever you like!</p>
+    <h2>Settings</h2>
+
   </main>
 </template>
 
