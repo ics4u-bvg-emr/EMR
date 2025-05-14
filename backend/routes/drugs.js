@@ -23,4 +23,13 @@ router.get('/drugs',async(req,res)=>{
     }
 })
 
+router.get('/drugs/:name',async(req,res)=>{
+    try{
+        const drug=await mongoose.connection.db.collection('drugs').findOne({name:req.params.name})
+        res.status(200).json(drug)
+    }catch(error){
+        res.status(500).json(error)
+    }
+})
+
 export default router
