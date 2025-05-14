@@ -9,6 +9,7 @@ import circleUserSvg from '@/components/circleuser.svg'
 import fileSvg from '@/components/file.svg'
 import calendarSvg from '@/components/calendar.svg'
 import graphSvg from '@/components/graph.svg'
+import homeSvg from '@/components/home.svg'
 
 export default {
   name: 'App',
@@ -16,12 +17,11 @@ export default {
   data() {
     return {
       menuItems: [
-        { icon: 'fas fa-home', label: 'Home', route: '/' },
+        { svg: homeSvg, label: 'Home', route: '/' },
         { svg: fileSvg, label: 'Records', route: '/records' },
         { svg: calendarSvg, label: 'Appointments', route: '/appointments' },
         { svg: graphSvg, label: 'Reports', route: '/reports' },
         { svg: gearSvg, label: 'Settings', route: '/settings' },
-        { icon: 'fas fa-sign-out-alt', label: 'Logout', route: '/logout' }
       ],
       currentUser: {
         svg: circleUserSvg,

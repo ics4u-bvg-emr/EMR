@@ -1,7 +1,7 @@
 <template>
   <main class="home-screen">
-    <h2>Welcome to EMR</h2>
-    <p>This is your dashboard/home page. Add widgets, stats, whatever you like!</p>
+    <h2>Reports</h2>
+
   </main>
 </template>
 
@@ -18,5 +18,9 @@ export default {
 }
 .home-screen h2 {
   margin-bottom: 1rem;
+  font-size: 2.5rem;  /* Larger font size */
+  font-weight: bold;  /* Make it bold */
+  border-bottom: 2px solid #2b2e3b;  /* Add a line underneath */
+  padding-bottom: 0.5rem;  /* Space between text and line */
 }
 </style>

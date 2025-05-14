@@ -2,7 +2,9 @@
   <div class="layout">
     <aside class="sidebar is-hidden-mobile">
       <div class="sidebar-header">
-        <h1 class="app-name">EMR</h1>
+        <!-- Add logo.svg to the left of the app name -->
+        <img src="@/components/logo.svg" alt="Logo" class="logo" /> <!-- Add logo here -->
+        <h1 class="app-name">ZorkCare</h1>
       </div>
       <nav class="menu-list">
         <ul>
@@ -102,10 +104,19 @@ export default {
 }
 
 .sidebar-header {
-  text-align: center;
+  text-align: center;  /* Ensure the contents are centered */
   padding-bottom: 1rem;
   border-bottom: 1px solid #d1d1d1;
   color: #585b65;
+  display: flex;
+  align-items: center;  /* Center items vertically */
+  justify-content: center;  /* Center items horizontally */
+  gap: 0.75rem;  /* Space between the logo and the app name */
+}
+
+.logo {
+  width: 30px;  /* Set the size of the logo */
+  height: 30px;  /* Set the size of the logo */
 }
 
 .app-name {
@@ -208,12 +219,12 @@ export default {
 
 /* Ensure the active state stays without changing text or icon colors */
 .is-active {
-  background-color: #e3ebf9 !important;  /* Keep the background color */
-  color: inherit !important;  /* Prevent text color change */
+  background-color: #e3ebf9 !important;
+  color: inherit !important;
 }
 
 .is-active .icon img,
 .is-active .icon i {
-  filter: none !important;  /* Prevent icon color change */
+  filter: none !important;
 }
 </style>
