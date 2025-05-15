@@ -9,9 +9,9 @@ router.get('/drugs',async(req,res)=>{
             {
                 _id:0,
                 name:1,
-                state:1,
-                groups:1,
-                indication:1,
+                // state:1,
+                // groups:1,
+                // indication:1,
                 // classification:1,
                 // targets:1,
                 // products:1,
@@ -23,7 +23,7 @@ router.get('/drugs',async(req,res)=>{
     }
 })
 
-router.get('/drugs/:name',async(req,res)=>{
+router.get('/drugs/:name/details',async(req,res)=>{
     try{
         const drug=await mongoose.connection.db.collection('drugs').findOne({name:req.params.name})
         res.status(200).json(drug)
@@ -46,5 +46,21 @@ router.get('/drugs/:name/interactions',async(req,res)=>{
     res.status(500).json(error)
     }
 })
+
+router.get('/drugs/search/:query',async(req,res)=>{
+    try{
+        const results=await mongoose.connection.db.collection('drugs').find({name:{$regex:req.params.query,$options:'i'}},{projection:
+            {
+                _id:0,
+                name:1,
+            }
+        }).toArray()
+        res.status(200).json(results)
+    }catch(error){
+        res.status(500).json(error)
+    }
+})
+
+
 
 export default router
