@@ -1,9 +1,14 @@
 <template>
-  <Sidebar :items="menuItems" :user="currentUser" />
+  <div class="layout">
+    <Sidebar :items="menuItems" :user="currentUser" />
+    <div class="content-area">
+      <router-view />
+    </div>
+  </div>
 </template>
 
 <script>
-import Sidebar from '@/components/sidebar.vue'
+import Sidebar from '@/components/Sidebar.vue'
 import gearSvg from '@/components/gear.svg'
 import circleUserSvg from '@/components/circleuser.svg'
 import fileSvg from '@/components/file.svg'
@@ -34,5 +39,18 @@ export default {
 </script>
 
 <style>
-/* Any global styles if needed */
+.layout {
+  display: flex;
+  height: 100vh;
+}
+
+.content-area {
+  flex-grow: 1;
+  padding: 1.5rem 2.5rem;
+  background: #fff;
+  color: #585b65;
+  font-family: 'Geist Sans', sans-serif;
+  overflow-y: auto;
+  min-width: 0;
+}
 </style>

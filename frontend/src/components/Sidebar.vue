@@ -1,95 +1,62 @@
 <template>
-  <div class="layout">
-    <aside class="sidebar is-hidden-mobile">
-      <div class="sidebar-header">
-        <!-- Add logo.svg to the left of the app name -->
-        <img src="@/components/logo.svg" alt="Logo" class="logo" /> <!-- Add logo here -->
-        <h1 class="app-name">ZorkCare</h1>
-      </div>
-      <nav class="menu-list">
-        <ul>
-          <li v-for="item in items" :key="item.label">
-            <router-link
-              :to="item.route"
-              class="nav-item"
-              active-class="is-active"
-            >
-              <span class="icon">
-                <img
-                  v-if="item.svg"
-                  :src="item.svg"
-                  class="svg-icon"
-                  :alt="`${item.label} icon`"
-                />
-                <i v-else :class="item.icon"></i>
-              </span>
-              {{ item.label }}
-            </router-link>
-          </li>
-        </ul>
-      </nav>
-    
-      <div class="sidebar-footer">
-        <router-link :to="user.route" class="user-link" active-class="is-active">
-          <span class="icon footer-icon">
-            <img
-              v-if="user.svg"
-              :src="user.svg"
-              class="svg-icon footer-svg"
-              :alt="`${user.name} icon`"
-            />
-            <i v-else :class="user.icon"></i>
-          </span>
-          {{ user.name }}
-        </router-link>
-      </div>
-    </aside>
-
-    <div class="content-area">
-      <!-- Main content goes here -->
-      <router-view />
+  <aside class="sidebar is-hidden-mobile">
+    <div class="sidebar-header">
+      <img src="@/components/logo.svg" alt="Logo" class="logo" />
+      <h1 class="app-name">BVGCare</h1>
     </div>
-  </div>
+    <nav class="menu-list">
+      <ul>
+        <li v-for="item in items" :key="item.label">
+          <router-link
+            :to="item.route"
+            class="nav-item"
+            active-class="is-active"
+          >
+            <span class="icon">
+              <img
+                v-if="item.svg"
+                :src="item.svg"
+                class="svg-icon"
+                :alt="`${item.label} icon`"
+              />
+              <i v-else :class="item.icon"></i>
+            </span>
+            {{ item.label }}
+          </router-link>
+        </li>
+      </ul>
+    </nav>
+    <div class="sidebar-footer">
+      <router-link :to="user.route" class="user-link" active-class="is-active">
+        <span class="icon footer-icon">
+          <img
+            v-if="user.svg"
+            :src="user.svg"
+            class="svg-icon footer-svg"
+            :alt="`${user.name} icon`"
+          />
+          <i v-else :class="user.icon"></i>
+        </span>
+        {{ user.name }}
+      </router-link>
+    </div>
+  </aside>
 </template>
 
 <script>
-import gearSvg from '@/components/gear.svg';
-import circleUserSvg from '@/components/circleuser.svg';
-
 export default {
   name: 'Sidebar',
   props: {
-    items: {
-      type: Array,
-      default: () => ([
-        { icon: 'fas fa-home', label: 'Home', route: '/' },
-        { icon: 'fas fa-file-medical-alt', label: 'Records', route: '/records' },
-        { icon: 'fas fa-calendar-alt', label: 'Appointments', route: '/appointments' },
-        { icon: 'fas fa-chart-line', label: 'Reports', route: '/reports' },
-        { svg: gearSvg, label: 'Settings', route: '/settings' },
-        { icon: 'fas fa-sign-out-alt', label: 'Logout', route: '/logout' }
-      ])
-    },
-    user: {
-      type: Object,
-      default: () => ({
-        svg: circleUserSvg,
-        name: 'Jane Doe',
-        route: '/profile'
-      })
-    }
+    items: Array,
+    user: Object
   }
 }
 </script>
 
 <style scoped>
+/* Copy all sidebar-specific styles from your original file */
 @import "https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css"; 
 @import url('https://fonts.googleapis.com/css2?family=Geist+Sans:wght@400;500;700&display=swap'); 
-
-.layout {
-  display: flex;
-  height: 100vh;
-}
 
 .sidebar {
   width: 220px;
@@ -104,19 +71,19 @@ export default {
 }
 
 .sidebar-header {
-  text-align: center;  /* Ensure the contents are centered */
+  text-align: center;
   padding-bottom: 1rem;
   border-bottom: 1px solid #d1d1d1;
   color: #585b65;
   display: flex;
-  align-items: center;  /* Center items vertically */
-  justify-content: center;  /* Center items horizontally */
-  gap: 0.75rem;  /* Space between the logo and the app name */
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
 }
 
 .logo {
-  width: 30px;  /* Set the size of the logo */
-  height: 30px;  /* Set the size of the logo */
+  width: 30px;
+  height: 30px;
 }
 
 .app-name {
@@ -153,10 +120,7 @@ export default {
   border-radius: 8px;
 }
 
-.nav-item:hover {
-  background-color: #e3ebf9;
-}
-
+.nav-item:hover,
 .nav-item:active {
   background-color: #e3ebf9;
 }
@@ -196,10 +160,7 @@ export default {
   border-radius: 8px;
 }
 
-.user-link:hover {
-  background-color: #e3ebf9;
-}
-
+.user-link:hover,
 .user-link:active {
   background-color: #e3ebf9;
 }
@@ -210,14 +171,6 @@ export default {
   align-items: center;
 }
 
-.content-area {
-  flex-grow: 1;
-  padding: 1rem;
-  background-color: #ffffff;
-  color: #585b65;
-}
-
-/* Ensure the active state stays without changing text or icon colors */
 .is-active {
   background-color: #e3ebf9 !important;
   color: inherit !important;
