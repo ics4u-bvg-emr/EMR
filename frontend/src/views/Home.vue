@@ -1,9 +1,14 @@
 <template>
   <!-- Geist Sans from Vercel Fonts (official CDN) -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vercel/fonts@1.0.2/geist/Geist-Sans.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vercel/fonts@1.0.2/geist/Geist-Sans.min.css">
 
   <section class="section">
     <div class="container">
+
+      <!-- Top: Dashboard Title Bar -->
+      <div class="dashboard-header mb-5">
+        <h1 class="dashboard-title">Dashboard</h1>
+      </div>
 
       <!-- Top Stats Row (no gender card) -->
       <div class="columns is-multiline">
@@ -40,7 +45,9 @@
         <!-- Agenda Table -->
         <div class="column is-7">
           <div class="box">
-            <p class="title is-6 mb-3">Agenda for: Wednesday, May 5, 2021</p>
+            <p class="title is-6 mb-3">
+              Appointments for {{ formattedDate }}
+            </p>
             <table class="table is-fullwidth is-hoverable is-size-7">
               <thead>
                 <tr>
@@ -77,7 +84,7 @@
                 </tr>
               </tbody>
             </table>
-            <a class="is-size-7" href="#">View all</a>
+            <router-link class="is-size-7" to="/appointments">View all</router-link>
           </div>
         </div>
         <!-- News & Updates -->
@@ -85,16 +92,16 @@
           <div class="box">
             <p class="title is-6 mb-3">News & Updates</p>
             <ul style="list-style: disc inside;" class="mb-3">
-              <li>New CPT Code Texy Boxes</li>
-              <li>New Year FAQ: Get answers to the most commonly ...</li>
-              <li>Initial Exam Case Copy</li>
-              <li>2021 Medicare cap amount update</li>
-              <li>2021 CPT Code Update</li>
-              <li>Auto Include Daily Note for all Insurance Types</li>
-              <li>Saving and Searching by Single Character First ...</li>
-              <li>Primary Treatment Clinic Added to Analytics ...</li>
+              <li>Dillon Gentry bloodwork ready</li>
+              <li>Elise Mclellan allergy update</li>
+              <li>Harvie Ratcliffe X-ray uploaded</li>
+              <li>Eshan Terrell needs refill</li>
+              <li>Maya Hawkins physical done</li>
+              <li>Felix Calderon referral received</li>
+              <li>Maria Villegas immunization update</li>
+              <li>Insurance form pre-approved</li>
             </ul>
-            <a class="is-size-7" href="#">View all</a>
+            <router-link class="is-size-7" to="/reports">View all</router-link>
           </div>
         </div>
       </div>
@@ -123,7 +130,7 @@
               <li>Incomplete Patient Records <b>3</b></li>
               <li>Fax Alerts <b>18</b></li>
             </ul>
-            <a class="is-size-7" href="#">View all</a>
+            <router-link class="is-size-7" to="/records">View all</router-link>
           </div>
         </div>
       </div>
@@ -133,14 +140,46 @@
 </template>
 
 <script>
+import circleUserSvg from '@/components/circleuser.svg'
+
 export default {
-  name: "EMRDashboardBulma"
-};
+  name: "EMRDashboardBulma",
+  data() {
+    return {
+      circleUserSvg,
+      now: new Date()
+    }
+  },
+  computed: {
+    formattedDate() {
+      return this.now.toLocaleDateString(undefined, {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    },
+    formattedTime() {
+      return this.now.toLocaleTimeString(undefined, {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+  },
+  mounted() {
+    // Update the time every minute
+    this.timer = setInterval(() => {
+      this.now = new Date();
+    }, 1000 * 60);
+  },
+  beforeDestroy() {
+    clearInterval(this.timer);
+  }
+}
 </script>
 
 <style scoped>
-/* Use Geist Sans everywhere in the dashboard */
-.container, 
+.container,
 .container * {
   font-family: "Geist Sans", "Inter", "Segoe UI", Arial, sans-serif;
   color: #585b65 !important;
@@ -148,42 +187,62 @@ export default {
   font-weight: 400;
 }
 
-/* Headings and titles */
-h1, h2, h3, h4, .title, .subtitle {
+/* Dashboard top bar */
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.2rem;
+  padding-top: 0.1rem;
+}
+
+.section {
+  padding-top: 1rem !important;
+}
+
+.dashboard-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #585b65;
+  letter-spacing: -0.5px;
+  margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+.title,
+.subtitle {
   font-weight: 600 !important;
   letter-spacing: -0.01em;
   color: #585b65 !important;
 }
 
-/* Card/block style: visible, soft, minimal shadow */
 .box {
   border-radius: 1rem;
-  border: 1.5px solid #e2e5ed; /* Subtle but visible border */
-  box-shadow: 0 2px 6px rgba(40, 44, 63, 0.07); /* Very soft shadow */
+  border: 1.5px solid #e2e5ed;
+  box-shadow: 0 2px 6px rgba(40, 44, 63, 0.07);
   background: #fff;
 }
 
-/* Table cells: vertically centered */
 .table th,
 .table td {
   vertical-align: middle;
   color: #585b65 !important;
 }
 
-/* For clickable links */
-a, a:visited {
+a,
+a:visited,
+.router-link-active {
   color: #2685fa;
 }
 
-a:hover {
+a:hover,
+.router-link-active {
   text-decoration: underline;
 }
 
-/* Optional: Make list dots match the text color */
 ul {
   color: #585b65;
 }
-
-
 </style>
-
