@@ -5,17 +5,18 @@ const router=express.Router()
 
 router.get('/drugs',async(req,res)=>{
     try{
-        const drugs=await mongoose.connection.db.collection('drugs').find({},{projection:
-            {
-                _id:0,
-                name:1,
-                // state:1,
-                // groups:1,
-                // indication:1,
-                // classification:1,
-                // targets:1,
-                // products:1,
-            }
+        const drugs=await mongoose.connection.db.collection('drugs').find({},{
+            projection:
+                {
+                    _id:0,
+                    name:1,
+                    // state:1,
+                    // groups:1,
+                    // indication:1,
+                    // classification:1,
+                    // targets:1,
+                    // products:1,
+                }
         }).toArray()
         res.status(200).json(drugs)
     }catch(error){
@@ -34,12 +35,13 @@ router.get('/drugs/:name/details',async(req,res)=>{
 
 router.get('/drugs/:name/interactions',async(req,res)=>{
     try{
-        const interactions=await mongoose.connection.db.collection('drugs').findOne({name:req.params.name},{projection:
-            {
-                _id:0,
-                'drug-interactions':1,
-                'food-interactions':1
-            }
+        const interactions=await mongoose.connection.db.collection('drugs').findOne({name:req.params.name},{
+            projection:
+                {
+                    _id:0,
+                    'drug-interactions':1,
+                    'food-interactions':1
+                }
         })
         res.status(200).json(interactions)
     }catch(error){
@@ -49,11 +51,12 @@ router.get('/drugs/:name/interactions',async(req,res)=>{
 
 router.get('/drugs/search/:query',async(req,res)=>{
     try{
-        const results=await mongoose.connection.db.collection('drugs').find({name:{$regex:req.params.query,$options:'i'}},{projection:
-            {
-                _id:0,
-                name:1,
-            }
+        const results=await mongoose.connection.db.collection('drugs').find({name:{$regex:req.params.query,$options:'i'}},{
+            projection:
+                {
+                    _id:0,
+                    name:1,
+                }
         }).toArray()
         res.status(200).json(results)
     }catch(error){
@@ -61,23 +64,25 @@ router.get('/drugs/search/:query',async(req,res)=>{
     }
 })
 
-router.post('/drugs/interaction-check',async(req,res)=>{
+router.get('/drugs/interaction-check',async(req,res)=>{
     try{
         const {drug1,drug2}=req.body
         if(!drug1||!drug2)
             return res.status(500).json({error:'needs 2 drugs'})
 
-        const interactions1=await mongoose.connection.db.collection('drugs').findOne({name:drug1},{projection:
-            {
-                _id:0,
-                'drug-interactions':1
-            }
+        const interactions1=await mongoose.connection.db.collection('drugs').findOne({name:drug1},{
+            projection:
+                {
+                    _id:0,
+                    'drug-interactions':1
+                }
         })
-        const interactions2=await mongoose.connection.db.collection('drugs').findOne({name:drug2},{projection:
-            {
-                _id:0,
-                'drug-interactions':1
-            }
+        const interactions2=await mongoose.connection.db.collection('drugs').findOne({name:drug2},{
+            projection:
+                {
+                    _id:0,
+                    'drug-interactions':1
+                }
         })
 
         if(!interactions1||!interactions2)
