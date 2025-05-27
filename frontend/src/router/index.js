@@ -6,6 +6,7 @@ import Appointments from '@/views/Appointments.vue'
 import Records from '@/views/Records.vue'
 import Reports from '@/views/Reports.vue'
 import Profile from '@/views/Profile.vue'
+import PatientEdit from '@/views/PatientEdit.vue'
 
 const routes = [
   { path: '/',      name: 'Home',  component: Home },
@@ -14,6 +15,8 @@ const routes = [
   { path: '/records', name: 'Records', component: Records },
   { path: '/reports', name: 'Reports', component: Reports },
   { path: '/profile', name: 'Profile', component: Profile },
+  { path: '/records/:id', name: 'PatientEdit', component: PatientEdit },
+
 ]
 
 const router = createRouter({
