@@ -7,8 +7,9 @@ const contactInfoSchema = new mongoose.Schema({
 });
 
 const medicalHistorySchema = new mongoose.Schema({
-  allergies: { type: [String], default: [] },
+  pastConditions: { type: [String], default: []},
   currentPrescriptions: { type: [String], default: [] },
+  familyHistory: { type: [String], default: [] },
   notes: { type: String }
 });
 
@@ -21,6 +22,7 @@ const patientSchema = new mongoose.Schema({
     contactInfo: contactInfoSchema,
     weight: { type: Number },
     height: { type: Number },
+    allergies: { type: [String], default: [] },
     medicalHistory: medicalHistorySchema
 });
 

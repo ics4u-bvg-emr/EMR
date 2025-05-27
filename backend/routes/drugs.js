@@ -83,12 +83,13 @@ router.post('/drugs/interaction-check',async(req,res)=>{
         if(!interactions1||!interactions2)
             return res.status(500).json({error:'drugs not found'})
         
-        const interaction1=interactions1['drug-interactions'].find(interaction=>interaction.name==drug2)
-        const interaction2=interactions2['drug-interactions'].find(interaction=>interaction.name==drug1)
-        if(interaction1||interaction2)
+        const interaction1=interactions1['drug-interactions'].find(interaction=>interaction.name==drug2);
+        const interaction2=interactions2['drug-interactions'].find(interaction=>interaction.name==drug1);
+
+        if(interaction1||interaction2){
             // return res.status(200).json({interactions:[interaction1,interaction2]})
             return res.status(200).json({interactions:interaction1.description})
-        else
+        }else
             return res.status(200).json({interactions:null})
     }catch(error){
         res.status(500).json(error)
