@@ -28,35 +28,35 @@
 </template>
 
 <script setup>
-import { ref, watch, computed } from 'vue';
-import axios from 'axios';
+import { ref, computed } from 'vue'
+import axios from 'axios'
 
-const emit = defineEmits(['close', 'submitted']);
-const props = defineProps({ date: String });
+const emit = defineEmits(['close', 'submitted'])
+const props = defineProps({ date: String })
 
-const doctorId = ref('');
-const patientId = ref('');
-const time = ref('');
-const reason = ref('');
-const notes = ref('');
+const doctorId = ref('')
+const patientId = ref('')
+const time = ref('')
+const reason = ref('')
+const notes = ref('')
 
 const start = computed(() => {
   return time.value && props.date
     ? `${props.date}T${time.value}:00`
-    : '';
-});
+    : ''
+})
 
 const end = computed(() => {
-  if (!start.value) return '';
-  const startDate = new Date(start.value);
-  const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
-  return endDate.toISOString();
-});
+  if (!start.value) return ''
+  const startDate = new Date(start.value)
+  const endDate = new Date(startDate.getTime() + 60 * 60 * 1000)
+  return endDate.toISOString()
+})
 
 const submitForm = async () => {
   if (!start.value || !end.value) {
-    alert('Please select a valid time');
-    return;
+    alert('Please select a valid time')
+    return
   }
 
   try {
@@ -68,15 +68,14 @@ const submitForm = async () => {
       reason: reason.value,
       notes: notes.value,
       status: 'pending'
-    });
+    })
 
-    emit('submitted', res.data);
-
+    emit('submitted', res.data)
   } catch (err) {
-    console.error('Failed to create appointment:', err);
-    alert('Failed to create appointment, please try again.');
+    console.error('Failed to create appointment:', err)
+    alert('Failed to create appointment, please try again.')
   }
-};
+}
 </script>
 
 <style scoped>

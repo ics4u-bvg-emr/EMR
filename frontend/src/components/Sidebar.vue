@@ -43,20 +43,17 @@
   </aside>
 </template>
 
-<script>
-export default {
-  name: 'Sidebar',
-  props: {
-    items: Array,
-    user: Object
-  }
-}
+<script setup>
+defineProps({
+  items: Array,
+  user: Object
+})
 </script>
 
 <style scoped>
 /* Copy all sidebar-specific styles from your original file */
-@import "https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css"; 
-@import url('https://fonts.googleapis.com/css2?family=Geist+Sans:wght@400;500;700&display=swap'); 
+@import "https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css";
+@import url('https://fonts.googleapis.com/css2?family=Geist+Sans:wght@400;500;700&display=swap');
 
 .sidebar {
   width: 220px;
