@@ -52,5 +52,6 @@ export default {
   font-family: 'Geist Sans', sans-serif;
   overflow-y: auto;
   min-width: 0;
+  
 }
 </style>

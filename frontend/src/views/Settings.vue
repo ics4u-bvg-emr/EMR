@@ -1,14 +1,10 @@
 <template>
   <main class="home-screen">
     <h2>Settings</h2>
-
   </main>
 </template>
 
-<script>
-export default {
-  name: 'Home',
-}
+<script setup>
 </script>
 
 <style scoped>

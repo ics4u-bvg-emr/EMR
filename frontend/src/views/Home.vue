@@ -139,43 +139,38 @@
   </section>
 </template>
 
-<script>
+<script setup>
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import circleUserSvg from '@/components/icons/circleuser.svg'
 
-export default {
-  name: "EMRDashboardBulma",
-  data() {
-    return {
-      circleUserSvg,
-      now: new Date()
-    }
-  },
-  computed: {
-    formattedDate() {
-      return this.now.toLocaleDateString(undefined, {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    },
-    formattedTime() {
-      return this.now.toLocaleTimeString(undefined, {
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    }
-  },
-  mounted() {
-    // Update the time every minute
-    this.timer = setInterval(() => {
-      this.now = new Date();
-    }, 1000 * 60);
-  },
-  beforeDestroy() {
-    clearInterval(this.timer);
-  }
-}
+
+const now = ref(new Date())
+
+const formattedDate = computed(() =>
+  now.value.toLocaleDateString(undefined, {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+)
+
+const formattedTime = computed(() =>
+  now.value.toLocaleTimeString(undefined, {
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+)
+
+let timer = null
+onMounted(() => {
+  timer = setInterval(() => {
+    now.value = new Date()
+  }, 1000 * 60)
+})
+onBeforeUnmount(() => {
+  clearInterval(timer)
+})
 </script>
 
 <style scoped>

@@ -23,4 +23,15 @@ export default defineConfig([
   js.configs.recommended,
   ...pluginVue.configs['flat/essential'],
   skipFormatting,
+
+  {
+    overrides: [
+    {
+      files: ['*.vue'],
+      rules: {
+        'vue/file-name': 'off',  // Disable the file-name rule for Vue files
+      },
+    },
+  ],
+  }
 ])

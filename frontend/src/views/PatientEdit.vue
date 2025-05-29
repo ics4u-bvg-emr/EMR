@@ -26,34 +26,30 @@
   </main>
 </template>
 
-<script>
-export default {
-  name: "PatientEdit",
-  data() {
-    return {
-      patient: null
-    }
-  },
-  created() {
-    // Here you would usually fetch patient data from API using this.$route.params.id
-    // For demo, let's mock it:
-    const mockPatients = [
-      { id: 1, name: 'Alice Smith', age: 28, condition: 'Asthma', provider: 'Dr. Rodriguez' },
-      { id: 2, name: 'Bob Johnson', age: 34, condition: 'Diabetes', provider: 'Dr. Jones' },
-      { id: 3, name: 'Carmen Lee', age: 41, condition: 'Hypertension', provider: 'Dr. Brooks' },
-      { id: 4, name: 'David Kim', age: 50, condition: 'Heart Disease', provider: 'Dr. Green' }
-    ];
-    const id = Number(this.$route.params.id);
-    this.patient = mockPatients.find(p => p.id === id) || null;
-  },
-  methods: {
-    save() {
-      // Normally, save to API.
-      alert('Patient saved! (Demo only)');
-      this.$router.push({ name: 'Records' });
-    }
-  }
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+
+const route = useRoute()
+const router = useRouter()
+const patient = ref(null)
+
+function save() {
+  alert('Patient saved! (Demo only)')
+  router.push({ name: 'Records' })
 }
+
+onMounted(() => {
+  // Mock data for demo
+  const mockPatients = [
+    { id: 1, name: 'Alice Smith', age: 28, condition: 'Asthma', provider: 'Dr. Rodriguez' },
+    { id: 2, name: 'Bob Johnson', age: 34, condition: 'Diabetes', provider: 'Dr. Jones' },
+    { id: 3, name: 'Carmen Lee', age: 41, condition: 'Hypertension', provider: 'Dr. Brooks' },
+    { id: 4, name: 'David Kim', age: 50, condition: 'Heart Disease', provider: 'Dr. Green' }
+  ]
+  const id = Number(route.params.id)
+  patient.value = mockPatients.find(p => p.id === id) || null
+})
 </script>
 
 <style scoped>
