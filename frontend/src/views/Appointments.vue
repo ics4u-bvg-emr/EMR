@@ -1,14 +1,38 @@
 <template>
   <main class="home-screen">
     <h2>Appointments</h2>
-
+    <FullCalendar :options="calendarOptions" />
   </main>
 </template>
 
-<script>
-export default {
-  name: 'Appointments',
-}
+<script setup>
+  import { ref } from 'vue';
+  import FullCalendar from '@fullcalendar/vue3';
+  import dayGridPlugin from '@fullcalendar/daygrid';
+  import interactionPlugin from '@fullcalendar/interaction';
+
+  let name = 'Appointments';
+
+  const calendarOptions = ref({
+    plugins: [dayGridPlugin, interactionPlugin],
+    initialView: 'dayGridMonth',
+    dateClick: function() {
+      alert('a day has been clicked!')
+    },
+    dayCellDidMount: (info) => {
+      info.el.addEventListener('mouseenter', () => {
+        info.el.style.backgroundColor = '#f0f8ff'
+        info.el.style.cursor = 'pointer'
+      })
+      info.el.addEventListener('mouseleave', () => {
+        info.el.style.backgroundColor = ''
+      })
+    }
+  })
+
+  let dateClick = () => {
+    
+  }
 </script>
 
 <style scoped>
