@@ -47,7 +47,7 @@ const calendarOptions = ref(buildCalendarOptions([]));
 
 const fetchAppointments = async () => {
   try {
-    const res = await axios.get('http://localhost:3000/api/appointments');
+    const res = await axios.get('https://emr-backend-h03z.onrender.com/api/appointments');
 
     appointments.value = res.data.map(appt => ({
       id: appt._id,
