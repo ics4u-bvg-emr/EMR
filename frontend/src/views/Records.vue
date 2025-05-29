@@ -2,43 +2,48 @@
   <main class="home-screen">
     <h2>Records</h2>
 
-    <!-- Search Field -->
+    <!-- Search Input -->
     <div class="field mb-4">
-      <label class="label" for="search">Search by patient name:</label>
+      <label class="label" for="patient-search">Search by name:</label>
       <div class="control">
         <input
-          id="search"
-          type="text"
+          id="patient-search"
           class="input"
-          placeholder="Type a name..."
+          type="text"
+          placeholder="Type patient name"
           v-model="searchQuery"
         />
       </div>
     </div>
 
-    <div class="card">
+    <!-- Loading/Error -->
+    <div v-if="loading" class="notification is-info">Loading patients...</div>
+    <div v-else-if="error" class="notification is-danger">{{ error }}</div>
+
+    <!-- Patient Table -->
+    <div class="card" v-else>
       <table class="patients-table">
         <thead>
           <tr>
             <th>Name</th>
             <th>Age</th>
-            <th>ID</th>
-            <th>Condition</th>
-            <th>Provider</th>
+            <th>Height</th>
+            <th>Weight</th>
+            <th>Sex</th>
           </tr>
         </thead>
         <tbody>
           <tr
             v-for="patient in filteredPatients"
-            :key="patient.id"
+            :key="patient._id"
             class="clickable-row"
-            @click="goToPatient(patient.id)"
+            @click="goToPatient(patient._id)"
           >
-            <td>{{ patient.name }}</td>
-            <td>{{ patient.age }}</td>
-            <td>{{ patient.id }}</td>
-            <td>{{ patient.condition }}</td>
-            <td>{{ patient.provider }}</td>
+            <td>{{ patient.firstName }} {{ patient.lastName }}</td>
+            <td>{{ calculateAge(patient.dateOfBirth) }}</td>
+            <td>{{ patient.height + ' cm'|| '—' }}</td>
+            <td>{{ patient.weight + 'kg' || '—' }}</td>
+            <td>{{ patient.sex ? patient.sex.charAt(0).toUpperCase() : '—' }}</td>
           </tr>
         </tbody>
       </table>
@@ -51,28 +56,48 @@ export default {
   name: 'Records',
   data() {
     return {
+      patients: [],
       searchQuery: '',
-      patients: [
-        { id: 1, name: 'Alice Smith', age: 28, condition: 'Asthma', provider: 'Dr. Rodriguez' },
-        { id: 2, name: 'Bob Johnson', age: 34, condition: 'Diabetes', provider: 'Dr. Jones' },
-        { id: 3, name: 'Carmen Lee', age: 41, condition: 'Hypertension', provider: 'Dr. Brooks' },
-        { id: 4, name: 'David Kim', age: 50, condition: 'Heart Disease', provider: 'Dr. Green' }
-      ]
+      loading: true,
+      error: null,
     };
   },
   computed: {
     filteredPatients() {
       const query = this.searchQuery.trim().toLowerCase();
       if (!query) return this.patients;
-      return this.patients.filter(patient =>
-        patient.name.toLowerCase().includes(query)
+      return this.patients.filter(p =>
+        `${p.firstName} ${p.lastName}`.toLowerCase().includes(query)
       );
     }
   },
   methods: {
+    async fetchPatients() {
+      this.loading = true;
+      this.error = null;
+      try {
+        const res = await fetch('http://localhost:3000/api/patients');
+        if (!res.ok) throw new Error('Failed to fetch patient data');
+        this.patients = await res.json();
+      } catch (err) {
+        this.error = 'Error loading patients: ' + err.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+    calculateAge(dateString) {
+      if (!dateString) return '—';
+      const birthDate = new Date(dateString);
+      const ageDifMs = Date.now() - birthDate.getTime();
+      const ageDate = new Date(ageDifMs);
+      return Math.abs(ageDate.getUTCFullYear() - 1970);
+    },
     goToPatient(patientId) {
       this.$router.push({ name: 'PatientEdit', params: { id: patientId } });
-    }
+    },
+  },
+  mounted() {
+    this.fetchPatients();
   }
 };
 </script>
@@ -110,7 +135,8 @@ export default {
   color: #262a33;
 }
 
-.patients-table th, .patients-table td {
+.patients-table th,
+.patients-table td {
   padding: 1rem;
   text-align: left;
 }
@@ -139,16 +165,5 @@ export default {
 
 .patients-table td {
   color: #262a33;
-}
-
-.field {
-  margin-bottom: 1.5rem;
-}
-
-.input {
-  padding: 0.75rem;
-  font-size: 1rem;
-  border-radius: 8px;
-  border: 1px solid #dcdde1;
 }
 </style>
