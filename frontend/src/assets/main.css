@@ -2,3 +2,142 @@ html, body {
   margin: 0;
   padding: 0;
 }
+
+/* Dark mode global styles */
+body.dark-mode {
+  background: #181a20 !important;
+  color: #e0e0e0 !important;
+}
+
+/* Main containers and cards */
+body.dark-mode .box,
+body.dark-mode .card,
+body.dark-mode .modal-content,
+body.dark-mode .sidebar,
+body.dark-mode .content-area,
+body.dark-mode .home-screen,
+body.dark-mode .updates-center {
+  background: #23262f !important;
+  color: #e0e0e0 !important;
+  border-color: #23262f !important;
+}
+
+/* Table and table headers */
+body.dark-mode .table,
+body.dark-mode .patients-table {
+  background: #23262f !important;
+  color: #e0e0e0 !important;
+}
+body.dark-mode .table th,
+body.dark-mode .table td,
+body.dark-mode .patients-table th,
+body.dark-mode .patients-table td {
+  color: #e0e0e0 !important;
+  background: #23262f !important;
+}
+
+/* Inputs, textareas, selects */
+body.dark-mode input,
+body.dark-mode textarea,
+body.dark-mode select {
+  background: #181a20 !important;
+  color: #e0e0e0 !important;
+  border-color: #444 !important;
+}
+
+body.dark-mode input#patient-search,
+body.dark-mode .input,
+body.dark-mode .input#patient-search {
+  background: #181a20 !important;
+  color: #e0e0e0 !important;
+  border: 1px solid #444 !important;
+}
+
+body.dark-mode .input::placeholder,
+body.dark-mode input::placeholder,
+body.dark-mode textarea::placeholder {
+  color: #aaa !important;
+}
+
+/* Bulma notification, buttons, etc. */
+body.dark-mode .notification {
+  background: #23262f !important;
+  color: #e0e0e0 !important;
+  border-color: #444 !important;
+}
+body.dark-mode .button {
+  background: #23262f !important;
+  color: #e0e0e0 !important;
+  border-color: #444 !important;
+}
+body.dark-mode .button.is-link {
+  background: #2685fa !important;
+  color: #fff !important;
+}
+
+/* Sidebar and nav */
+body.dark-mode .sidebar {
+  background: #20222b !important;
+  color: #e0e0e0 !important;
+  border-right: 1px solid #23262f !important;
+}
+body.dark-mode .nav-item,
+body.dark-mode .user-link {
+  background: transparent !important;
+  color: #e0e0e0 !important;
+}
+body.dark-mode .nav-item:hover,
+body.dark-mode .user-link:hover,
+body.dark-mode .is-active {
+  background: #23262f !important;
+  color: #fff !important;
+}
+
+/* Scrollbar styling */
+body.dark-mode ::-webkit-scrollbar {
+  width: 12px;
+  background: #23262f;
+}
+body.dark-mode ::-webkit-scrollbar-thumb {
+  background: #393c48;
+  border-radius: 6px;
+}
+body.dark-mode ::-webkit-scrollbar-thumb:hover {
+  background: #55596a;
+}
+body.dark-mode ::-webkit-scrollbar-corner {
+  background: #23262f;
+}
+
+/* For Firefox */
+body.dark-mode {
+  scrollbar-color: #393c48 #23262f;
+  scrollbar-width: thin;
+}
+
+/* Links */
+body.dark-mode a,
+body.dark-mode a:visited,
+body.dark-mode .router-link-active {
+  color: #7bb6ff !important;
+}
+body.dark-mode a:hover,
+body.dark-mode .router-link-active {
+  text-decoration: underline;
+}
+
+/* Headings and strong text */
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode h4,
+body.dark-mode .title,
+body.dark-mode .subtitle,
+body.dark-mode strong {
+  color: #fff !important;
+}
+body.dark-mode .tag.is-info.is-light {
+  background-color: #22334a !important;
+  color: #aee2ff !important;
+  border-color: #22334a !important;
+}
