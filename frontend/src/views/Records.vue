@@ -52,55 +52,51 @@
   </main>
 </template>
 
-<script>
-export default {
-  name: 'Records',
-  data() {
-    return {
-      patients: [],
-      searchQuery: '',
-      loading: true,
-      error: null,
-    };
-  },
-  computed: {
-    filteredPatients() {
-      const query = this.searchQuery.trim().toLowerCase();
-      if (!query) return this.patients;
-      return this.patients.filter(p =>
-        `${p.firstName} ${p.lastName}`.toLowerCase().includes(query)
-      );
-    }
-  },
-  methods: {
-    async fetchPatients() {
-      this.loading = true;
-      this.error = null;
-      try {
-        const res = await fetch('https://emr-backend-h03z.onrender.com/api/patients');
-        if (!res.ok) throw new Error('Failed to fetch patient data');
-        this.patients = await res.json();
-      } catch (err) {
-        this.error = 'Error loading patients: ' + err.message;
-      } finally {
-        this.loading = false;
-      }
-    },
-    calculateAge(dateString) {
-      if (!dateString) return '—';
-      const birthDate = new Date(dateString);
-      const ageDifMs = Date.now() - birthDate.getTime();
-      const ageDate = new Date(ageDifMs);
-      return Math.abs(ageDate.getUTCFullYear() - 1970);
-    },
-    goToPatient(patientId) {
-      this.$router.push({ name: 'PatientEdit', params: { id: patientId } });
-    }
-  },
-  mounted() {
-    this.fetchPatients();
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+
+const patients = ref([])
+const searchQuery = ref('')
+const loading = ref(true)
+const error = ref(null)
+const router = useRouter()
+
+const fetchPatients = async () => {
+  loading.value = true
+  error.value = null
+  try {
+    const res = await fetch('https://emr-backend-h03z.onrender.com/api/patients')
+    if (!res.ok) throw new Error('Failed to fetch patient data')
+    patients.value = await res.json()
+  } catch (err) {
+    error.value = 'Error loading patients: ' + err.message
+  } finally {
+    loading.value = false
   }
-};
+}
+
+const filteredPatients = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+  if (!query) return patients.value
+  return patients.value.filter(p =>
+    `${p.firstName} ${p.lastName}`.toLowerCase().includes(query)
+  )
+})
+
+function calculateAge(dateString) {
+  if (!dateString) return '—'
+  const birthDate = new Date(dateString)
+  const ageDifMs = Date.now() - birthDate.getTime()
+  const ageDate = new Date(ageDifMs)
+  return Math.abs(ageDate.getUTCFullYear() - 1970)
+}
+
+function goToPatient(patientId) {
+  router.push({ name: 'PatientEdit', params: { id: patientId } })
+}
+
+onMounted(fetchPatients)
 </script>
 
 <style scoped>
