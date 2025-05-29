@@ -140,7 +140,7 @@
 </template>
 
 <script>
-import circleUserSvg from '@/components/circleuser.svg'
+import circleUserSvg from '@/components/icons/circleuser.svg'
 
 export default {
   name: "EMRDashboardBulma",

@@ -1,7 +1,7 @@
 <template>
   <aside class="sidebar is-hidden-mobile">
     <div class="sidebar-header">
-      <img src="@/components/logo.svg" alt="Logo" class="logo" />
+      <img src="@/components/icons/logo.svg" alt="Logo" class="logo" />
       <h1 class="app-name">BVGCare</h1>
     </div>
     <nav class="menu-list">

@@ -9,12 +9,12 @@
 
 <script>
 import Sidebar from '@/components/Sidebar.vue'
-import gearSvg from '@/components/gear.svg'
-import circleUserSvg from '@/components/circleuser.svg'
-import fileSvg from '@/components/file.svg'
-import calendarSvg from '@/components/calendar.svg'
-import graphSvg from '@/components/graph.svg'
-import homeSvg from '@/components/home.svg'
+import gearSvg from '@/components/icons/gear.svg'
+import circleUserSvg from '@/components/icons/circleuser.svg'
+import fileSvg from '@/components/icons/file.svg'
+import calendarSvg from '@/components/icons/calendar.svg'
+import graphSvg from '@/components/icons/graph.svg'
+import homeSvg from '@/components/icons/home.svg'
 
 export default {
   name: 'App',
