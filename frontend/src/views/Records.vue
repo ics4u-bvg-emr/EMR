@@ -3,18 +3,19 @@
     <h2>Records</h2>
 
     <!-- Search Input -->
-    <div class="field mb-4">
-      <label class="label" for="patient-search">Search by name:</label>
-      <div class="control">
-        <input
-          id="patient-search"
-          class="input"
-          type="text"
-          placeholder="Type patient name"
-          v-model="searchQuery"
-        />
-      </div>
+  <div class="field mb-4">
+    <label class="label has-text-black" for="patient-search">Search by name:</label>
+    <div class="control">
+      <input
+        id="patient-search"
+        class="input"
+        type="text"
+        placeholder="Type patient name"
+        v-model="searchQuery"
+      />
     </div>
+  </div>
+
 
     <!-- Loading/Error -->
     <div v-if="loading" class="notification is-info">Loading patients...</div>
@@ -165,5 +166,16 @@ export default {
 
 .patients-table td {
   color: #262a33;
+}
+
+input#patient-search {
+  background-color: #fff !important;
+  color: #000 !important;
+  border: 1px solid #ccc !important;
+}
+
+/* Make placeholder text darker */
+.input::placeholder {
+  color: #555 !important;
 }
 </style>

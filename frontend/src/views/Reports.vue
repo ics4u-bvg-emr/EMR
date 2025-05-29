@@ -4,7 +4,7 @@
 
     <!-- Filter Input -->
     <div class="field mb-4">
-      <label class="label" for="patient-search">Filter by patient:</label>
+      <label class="label has-text-black" for="patient-search">Filter By Patient:</label>
       <div class="control">
         <input
           id="patient-search"
@@ -249,5 +249,19 @@ export default {
 
 em {
   color: #444;
+}
+
+input#patient-search {
+  background-color: #fff !important;
+  color: #000 !important;
+  border: 1px solid #ccc !important;
+}
+
+.input::placeholder {
+  color: #555 !important;
+}
+
+strong {
+  color: #000 !important;
 }
 </style>
