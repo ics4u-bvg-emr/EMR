@@ -16,6 +16,7 @@ import { ref, onMounted } from 'vue';
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
+import multiMonthPlugin from '@fullcalendar/multimonth'
 import axios from 'axios';
 import AppointmentsModal from '../components/AppointmentsModal.vue';
 
@@ -25,7 +26,12 @@ const selectedDate = ref('');
 const calendarRef = ref(null);
 
 const buildCalendarOptions = (eventsArray) => ({
-  plugins: [dayGridPlugin, interactionPlugin],
+  plugins: [dayGridPlugin, interactionPlugin, multiMonthPlugin],
+  headerToolbar: {
+    left: 'prev,next,today',
+    center: 'title',
+    right: 'multiMonthYear,dayGridMonth,dayGridWeek'
+  },
   initialView: 'dayGridMonth',
   events: eventsArray,
   dateClick(info) {
