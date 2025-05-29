@@ -76,7 +76,7 @@ export default {
       this.loading = true;
       this.error = null;
       try {
-        const res = await fetch('https://emr-backend-h03z.onrender.com/api/patients'),
+        const res = await fetch('https://emr-backend-h03z.onrender.com/api/patients');
         if (!res.ok) throw new Error('Failed to fetch patient data');
         this.patients = await res.json();
       } catch (err) {
