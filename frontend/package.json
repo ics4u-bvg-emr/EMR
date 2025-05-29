@@ -15,6 +15,7 @@
     "@fullcalendar/daygrid": "^6.1.17",
     "@fullcalendar/interaction": "^6.1.17",
     "@fullcalendar/vue3": "^6.1.17",
+    "axios": "^1.9.0",
     "pinia": "^3.0.1",
     "primevue": "^4.3.3",
     "vue": "^3.5.13",
