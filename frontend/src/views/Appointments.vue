@@ -11,21 +11,22 @@
   </main>
 </template>
 
+
 <script setup>
 import { ref, onMounted } from 'vue';
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
-import multiMonthPlugin from '@fullcalendar/multimonth'
+import multiMonthPlugin from '@fullcalendar/multimonth';
 import axios from 'axios';
 import AppointmentsModal from '../components/AppointmentsModal.vue';
 
-const appointments = ref([]);
+const calendarRef = ref(null);
 const showModal = ref(false);
 const selectedDate = ref('');
-const calendarRef = ref(null);
 
-const buildCalendarOptions = (eventsArray) => ({
+// Calendar options
+const calendarOptions = ref({
   plugins: [dayGridPlugin, interactionPlugin, multiMonthPlugin],
   headerToolbar: {
     left: 'prev,next,today',
@@ -33,7 +34,6 @@ const buildCalendarOptions = (eventsArray) => ({
     right: 'multiMonthYear,dayGridMonth,dayGridWeek'
   },
   initialView: 'dayGridMonth',
-  events: eventsArray,
   dateClick(info) {
     selectedDate.value = info.dateStr;
     showModal.value = true;
@@ -49,47 +49,65 @@ const buildCalendarOptions = (eventsArray) => ({
   }
 });
 
-const calendarOptions = ref(buildCalendarOptions([]));
+const toISO = (dateStr) => {
+  // Try to parse and convert to ISO string, fallback to original if invalid
+  const d = new Date(dateStr);
+  return !isNaN(d) ? d.toISOString() : '';
+};
 
 const fetchAppointments = async () => {
   try {
-    const res = await axios.get('https://emr-backend-h03z.onrender.com/api/appointments');
-
-    appointments.value = res.data.map(appt => ({
-      id: appt._id,
-      title: appt.reason || 'Appointment',
-      start: new Date(appt.start).toISOString(),
-      end: new Date(appt.end).toISOString(),
-      allDay: false,
-      extendedProps: {
-        notes: appt.notes || ''
-      }
-    }));
-
-    calendarOptions.value = buildCalendarOptions(appointments.value);
+    const res = await axios.get('http://localhost:3000/api/appointments');
+    const validEvents = res.data
+      .map(appt => {
+        const startISO = toISO(appt.start);
+        const endISO = toISO(appt.end);
+        if (!startISO || !endISO) return null;
+        return {
+          id: appt._id,
+          title: appt.reason || 'Appointment',
+          start: startISO,
+          end: endISO,
+          allDay: false,
+          extendedProps: {
+            notes: appt.notes || '',
+            status: appt.status
+          }
+        };
+      })
+      .filter(Boolean); // Remove any nulls
+    calendarOptions.value.events = validEvents;
   } catch (err) {
     console.error('Failed to fetch appointments:', err);
   }
-};
-
-const addAppointmentToCalendar = (appointment) => {
-  const calendarApi = calendarRef.value.getApi();
-  calendarApi.addEvent({
-    id: appointment._id,
-    title: appointment.reason || 'Appointment',
-    start: new Date(appointment.start).toISOString(),
-    end: new Date(appointment.end).toISOString(),
-    allDay: false,
-    extendedProps: {
-      notes: appointment.notes || ''
-    }
-  });
 };
 
 const handleSubmitted = (newAppointment) => {
   showModal.value = false;
   addAppointmentToCalendar(newAppointment);
 };
+
+const addAppointmentToCalendar = (appointment) => {
+  if (!isValidDateString(appointment.start) || !isValidDateString(appointment.end)) {
+    console.warn('Invalid appointment dates on add:', appointment);
+    return;
+  }
+  calendarOptions.value.events.push({
+    id: appointment._id,
+    title: appointment.reason || 'Appointment',
+    start: appointment.start,
+    end: appointment.end,
+    allDay: false,
+    extendedProps: {
+      notes: appointment.notes || '',
+      status: appointment.status
+    }
+  });
+};
+
+function isValidDateString(dateStr) {
+  return dateStr && !isNaN(Date.parse(dateStr));
+}
 
 onMounted(fetchAppointments);
 </script>
