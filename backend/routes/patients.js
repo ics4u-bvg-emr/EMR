@@ -18,7 +18,6 @@ router.get('/patients', async (req, res) => {
 });
 
 //POSTS
-// router.post()
 
 //DELETE
 

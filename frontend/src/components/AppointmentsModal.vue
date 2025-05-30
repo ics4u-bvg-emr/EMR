@@ -1,40 +1,52 @@
 <template>
-  <div class="modal-backdrop">
-    <div class="modal-content">
-        <h3 v-if="isViewing">Appointment Details</h3>
-        <h3 v-else>New Appointment for {{ date }}</h3>
-        <form v-if="!isViewing" @submit.prevent="submitForm">
-            <label>Doctor ID:</label>
-            <input v-model="doctorId" required />
-            <label>Patient ID:</label>
-            <input v-model="patientId" required />
-            <label>Time:</label>
-            <input type="time" v-model="time" required />
-            <label>Reason:</label>
-            <input v-model="reason" />
-            <label>Notes:</label>
-            <textarea v-model="notes" />
-            <div class="actions">
-                <button type="submit">Create</button>
-                <button type="button" @click="$emit('close')">Cancel</button>
-            </div>
-        </form>
-        <div v-else>
-            <p><b>Title:</b> {{ props.event.title }}</p>
-            <p><b>Start:</b> {{ props.event.startStr }}</p>
-            <p><b>End:</b> {{ props.event.endStr }}</p>
-            <p><b>Status:</b> {{ props.event.extendedProps.status }}</p>
-            <p><b>Notes:</b> {{ props.event.extendedProps.notes }}</p>
-            <div class="actions">
-                <button type="button" @click="$emit('close')">Close</button>
+    <div class="modal-backdrop">
+        <div class="modal-content">
+            <h3 v-if="isViewing">Appointment Details</h3>
+            <h3 v-else>New Appointment</h3>
+            <form v-if="!isViewing" @submit.prevent="submitForm">
+                <label>Doctor ID:</label>
+                <input v-model="doctorId" required />
+
+                <label>Patient Name:</label>
+                <select v-model="selectedPatient" required>
+                    <option disabled value="">Select a patient</option>
+                    <option v-for="p in patients" :key="p.id" :value="p.id">{{ p.name }}</option>
+                </select>
+
+                <label>Start:</label>
+                <input type="datetime-local" v-model="start" required />
+
+                <label>End:</label>
+                <input type="datetime-local" v-model="end" required />
+
+                <label>Reason:</label>
+                <input v-model="reason" />
+
+                <label>Notes:</label>
+                <textarea v-model="notes" />
+
+                <div class="actions">
+                    <button type="submit">Create</button>
+                    <button type="button" @click="$emit('close')">Cancel</button>
+                </div>
+            </form>
+            <div v-else>
+                <p><b>Title:</b> {{ props.event.title }}</p>
+                <p><b>Patient:</b> {{ props.event.extendedProps.patientName || 'N/A' }}</p>
+                <p><b>Start:</b> {{ formatDateTime(props.event.start) }}</p>
+                <p><b>End:</b> {{ formatDateTime(props.event.end) }}</p>
+                <p><b>Status:</b> {{ props.event.extendedProps.status }}</p>
+                <p><b>Notes:</b> {{ props.event.extendedProps.notes }}</p>
+                <div class="actions">
+                    <button type="button" @click="$emit('close')">Close</button>
+                </div>
             </div>
         </div>
     </div>
-  </div>
 </template>
 
 <script setup>
-    import { ref, computed, watch} from 'vue'
+    import { ref, computed, watch, onMounted} from 'vue'
     import axios from 'axios'
 
     const emit = defineEmits(['close', 'submitted'])
@@ -44,40 +56,30 @@
     });
 
     const doctorId = ref('')
-    const patientId = ref('')
-    const time = ref('')
+    const selectedPatient = ref('')
+    const start = ref('')
+    const end = ref('')
     const reason = ref('')
     const notes = ref('')
-
-    const start = computed(() => {
-        return time.value && props.date ? `${props.date}T${time.value}:00` : '' ;
-    })
-
-    const end = computed(() => {
-        if (!start.value) return ''
-        const startDate = new Date(start.value)
-        const endDate = new Date(startDate.getTime() + 60 * 60 * 1000)
-        return endDate.toISOString()
-    })
+    const patients = ref([])
 
     const isViewing = computed(() => !!props.event);
 
-
     const submitForm = async () => {
-        if (!start.value || !end.value) {
-            alert('Please select a valid time')
-            return
+        if (!start.value || !end.value || !selectedPatient.value) {
+            alert('Please fill in all required fields');
+            return;
         }
 
         try {
-            const res = await axios.post('https://localhost:8000/api/appointments', {
-            doctorId: doctorId.value,
-            patientId: patientId.value,
-            start: start.value,
-            end: end.value,
-            reason: reason.value,
-            notes: notes.value,
-            status: 'pending'
+            const res = await axios.post('http://localhost:3000/api/appointments', {
+                doctorId: doctorId.value.trim(),
+                patientId: selectedPatient.value,
+                start: new Date(start.value).toISOString(),
+                end: new Date(end.value).toISOString(),
+                reason: reason.value.trim(),
+                notes: notes.value.trim(),
+                status: 'pending',
             })
 
             emit('submitted', res.data)
@@ -86,14 +88,38 @@
             alert('Failed to create appointment, please try again.')
         }
     }
+
+    function formatDateTime(datetime) {
+        const options = {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        };
+        return new Date(datetime).toLocaleString(undefined, options);
+    }
     
     watch(() => props.event, (newVal) => {
         if (!newVal) {
             doctorId.value = '';
-            patientId.value = '';
-            time.value = '';
+            selectedPatient.value = '';
+            start.value = '';
+            end.value = '';
             reason.value = '';
             notes.value = '';
+        }
+    });
+
+    onMounted(async () => {
+        try {
+            const res = await axios.get('http://localhost:3000/api/patients');
+            patients.value = res.data.map(p => ({
+                id: p._id,
+                name: `${p.firstName} ${p.lastName}`,
+            }));
+        } catch (err) {
+            console.error('Error loading patients:', err);
         }
     });
 </script>

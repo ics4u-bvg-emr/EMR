@@ -12,29 +12,29 @@
   </main>
 </template>
 
-
 <script setup>
 import { ref, onMounted } from 'vue';
 import FullCalendar from '@fullcalendar/vue3';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import interactionPlugin from '@fullcalendar/interaction';
 import multiMonthPlugin from '@fullcalendar/multimonth';
+import timeGridPlugin from '@fullcalendar/timegrid';
 import axios from 'axios';
 import AppointmentsModal from '../components/AppointmentsModal.vue';
 
 const calendarRef = ref(null);
 const showModal = ref(false);
 const selectedDate = ref('');
-const selectedEvent = ref('')
+const selectedEvent = ref(null);
 
 const calendarOptions = ref({
-  plugins: [dayGridPlugin, interactionPlugin, multiMonthPlugin],
+  plugins: [dayGridPlugin, interactionPlugin, multiMonthPlugin, timeGridPlugin],
   headerToolbar: {
     left: 'prev,next,today',
     center: 'title',
-    right: 'multiMonthYear,dayGridMonth,dayGridWeek'
+    right: 'multiMonthYear,dayGridMonth,timeGridWeek',
   },
-  eventlimit: 4,
+  eventLimit: true,
   initialView: 'dayGridMonth',
   displayEventEnd: true,
   dateClick(info) {
@@ -46,7 +46,7 @@ const calendarOptions = ref({
     selectedEvent.value = info.event;
     selectedDate.value = info.event.startStr;
     showModal.value = true;
-  } ,
+  },
   dayCellDidMount(info) {
     info.el.addEventListener('mouseenter', () => {
       info.el.style.backgroundColor = '#f0f8ff';
@@ -55,7 +55,7 @@ const calendarOptions = ref({
     info.el.addEventListener('mouseleave', () => {
       info.el.style.backgroundColor = '';
     });
-  }
+  },
 });
 
 const toISO = (dateStr) => {
@@ -67,20 +67,22 @@ const fetchAppointments = async () => {
   try {
     const res = await axios.get('http://localhost:3000/api/appointments');
     const validEvents = res.data
-      .map(appt => {
+      .map((appt) => {
         const startISO = toISO(appt.start);
         const endISO = toISO(appt.end);
         if (!startISO || !endISO) return null;
+        const patientName = appt.patientId ? `${appt.patientId.firstName} ${appt.patientId.lastName}` : 'Unknown Patien'
         return {
           id: appt._id,
-          title: appt.reason || 'Appointment',
+          title: `${appt.reason || 'Appointment'}`,
           start: startISO,
           end: endISO,
           allDay: false,
           extendedProps: {
             notes: appt.notes || '',
-            status: appt.status
-          }
+            status: appt.status,
+            patientName
+          },
         };
       })
       .filter(Boolean);
@@ -90,32 +92,32 @@ const fetchAppointments = async () => {
   }
 };
 
-const handleSubmitted = (newAppointment) => {
+const handleSubmitted = async () => {
   showModal.value = false;
-  addAppointmentToCalendar(newAppointment);
+  await fetchAppointments();
 };
 
-const addAppointmentToCalendar = (appointment) => {
-  if (!isValidDateString(appointment.start) || !isValidDateString(appointment.end)) {
-    console.warn('Invalid appointment dates on add:', appointment);
-    return;
-  }
-  calendarOptions.value.events.push({
-    id: appointment._id,
-    title: appointment.reason || 'Appointment',
-    start: appointment.start,
-    end: appointment.end,
-    allDay: false,
-    extendedProps: {
-      notes: appointment.notes || '',
-      status: appointment.status
-    }
-  });
-};
+// const addAppointmentToCalendar = (appointment) => {
+//   if (!isValidDateString(appointment.start) || !isValidDateString(appointment.end)) {
+//     console.warn('Invalid appointment dates on add:', appointment);
+//     return;
+//   }
+//   calendarOptions.value.events.push({
+//     id: appointment._id,
+//     title: appointment.reason || 'Appointment',
+//     start: appointment.start,
+//     end: appointment.end,
+//     allDay: false,
+//     extendedProps: {
+//       notes: appointment.notes || '',
+//       status: appointment.status,
+//     },
+//   });
+// };
 
-function isValidDateString(dateStr) {
-  return dateStr && !isNaN(Date.parse(dateStr));
-}
+// function isValidDateString(dateStr) {
+//   return dateStr && !isNaN(Date.parse(dateStr));
+// }
 
 onMounted(fetchAppointments);
 </script>

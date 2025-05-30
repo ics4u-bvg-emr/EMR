@@ -8,7 +8,7 @@ const ObjectId = mongoose.Types.ObjectId;
 //GETS
 router.get('/appointments', async (req, res) => {
     try{
-        const appointments = await Appointment.find();
+        const appointments = await Appointment.find().populate('patientId', 'firstName lastName').exec();
         res.json(appointments);
     }catch (error){
         res.status(500).json({ 
@@ -21,32 +21,41 @@ router.get('/appointments', async (req, res) => {
 //POSTS
 router.post('/appointments', async (req, res) => {
     try {
-        if (!ObjectId.isValid(req.body.doctorId)) {
+        const { doctorId, patientId, start, end, reason, notes, status } = req.body;
+
+        if (!ObjectId.isValid(doctorId)) {
             return res.status(400).json({ message: "Invalid doctor ID format" });
         }
-        if (!ObjectId.isValid(req.body.patientId)) {
+        if (!ObjectId.isValid(patientId)) {
             return res.status(400).json({ message: "Invalid patient ID format" });
         }
 
+        if (!start || isNaN(Date.parse(start))) {
+            return res.status(400).json({ message: "Invalid or missing start time" });
+        }
+        if (!end || isNaN(Date.parse(end))) {
+            return res.status(400).json({ message: "Invalid or missing end time" });
+        }
         const appointment = new Appointment({
             doctorId: req.body.doctorId,
             patientId: req.body.patientId,
-            date: new Date(req.body.date),
-            time: req.body.time,
+            start: new Date(start),
+            end: new Date(end),
             reason: req.body.reason,
             notes: req.body.notes,
             status: req.body.status,
         });
-        
+
         const savedAppointment = await appointment.save();
-        res.status(201).json({ 
-          message: "Appointment created successfully", 
-          _id: savedAppointment._id
+
+        res.status(201).json({
+            message: "Appointment created successfully",
+            _id: savedAppointment._id
         });
     } catch (error) {
-        res.status(500).json({ 
-            message: "Error creating appointment", 
-            error: error.message 
+        res.status(500).json({
+            message: "Error creating appointment",
+            error: error.message
         });
     }
 });
