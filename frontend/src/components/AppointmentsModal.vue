@@ -1,81 +1,101 @@
 <template>
   <div class="modal-backdrop">
     <div class="modal-content">
-      <h3>New Appointment for {{ date }}</h3>
-      <form @submit.prevent="submitForm">
-        <label>Doctor ID:</label>
-        <input v-model="doctorId" required />
-
-        <label>Patient ID:</label>
-        <input v-model="patientId" required />
-
-        <label>Time:</label>
-        <input type="time" v-model="time" required />
-
-        <label>Reason:</label>
-        <input v-model="reason" />
-
-        <label>Notes:</label>
-        <textarea v-model="notes" />
-
-        <div class="actions">
-          <button type="submit">Create</button>
-          <button type="button" @click="$emit('close')">Cancel</button>
+        <h3 v-if="isViewing">Appointment Details</h3>
+        <h3 v-else>New Appointment for {{ date }}</h3>
+        <form v-if="!isViewing" @submit.prevent="submitForm">
+            <label>Doctor ID:</label>
+            <input v-model="doctorId" required />
+            <label>Patient ID:</label>
+            <input v-model="patientId" required />
+            <label>Time:</label>
+            <input type="time" v-model="time" required />
+            <label>Reason:</label>
+            <input v-model="reason" />
+            <label>Notes:</label>
+            <textarea v-model="notes" />
+            <div class="actions">
+                <button type="submit">Create</button>
+                <button type="button" @click="$emit('close')">Cancel</button>
+            </div>
+        </form>
+        <div v-else>
+            <p><b>Title:</b> {{ props.event.title }}</p>
+            <p><b>Start:</b> {{ props.event.startStr }}</p>
+            <p><b>End:</b> {{ props.event.endStr }}</p>
+            <p><b>Status:</b> {{ props.event.extendedProps.status }}</p>
+            <p><b>Notes:</b> {{ props.event.extendedProps.notes }}</p>
+            <div class="actions">
+                <button type="button" @click="$emit('close')">Close</button>
+            </div>
         </div>
-      </form>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import axios from 'axios'
+    import { ref, computed, watch} from 'vue'
+    import axios from 'axios'
 
-const emit = defineEmits(['close', 'submitted'])
-const props = defineProps({ date: String })
+    const emit = defineEmits(['close', 'submitted'])
+    const props = defineProps({
+        date: String,
+        event: Object
+    });
 
-const doctorId = ref('')
-const patientId = ref('')
-const time = ref('')
-const reason = ref('')
-const notes = ref('')
+    const doctorId = ref('')
+    const patientId = ref('')
+    const time = ref('')
+    const reason = ref('')
+    const notes = ref('')
 
-const start = computed(() => {
-  return time.value && props.date
-    ? `${props.date}T${time.value}:00`
-    : ''
-})
-
-const end = computed(() => {
-  if (!start.value) return ''
-  const startDate = new Date(start.value)
-  const endDate = new Date(startDate.getTime() + 60 * 60 * 1000)
-  return endDate.toISOString()
-})
-
-const submitForm = async () => {
-  if (!start.value || !end.value) {
-    alert('Please select a valid time')
-    return
-  }
-
-  try {
-    const res = await axios.post('https://localhost:8000/api/appointments', {
-      doctorId: doctorId.value,
-      patientId: patientId.value,
-      start: start.value,
-      end: end.value,
-      reason: reason.value,
-      notes: notes.value,
-      status: 'pending'
+    const start = computed(() => {
+        return time.value && props.date ? `${props.date}T${time.value}:00` : '' ;
     })
 
-    emit('submitted', res.data)
-  } catch (err) {
-    console.error('Failed to create appointment:', err)
-    alert('Failed to create appointment, please try again.')
-  }
-}
+    const end = computed(() => {
+        if (!start.value) return ''
+        const startDate = new Date(start.value)
+        const endDate = new Date(startDate.getTime() + 60 * 60 * 1000)
+        return endDate.toISOString()
+    })
+
+    const isViewing = computed(() => !!props.event);
+
+
+    const submitForm = async () => {
+        if (!start.value || !end.value) {
+            alert('Please select a valid time')
+            return
+        }
+
+        try {
+            const res = await axios.post('https://localhost:8000/api/appointments', {
+            doctorId: doctorId.value,
+            patientId: patientId.value,
+            start: start.value,
+            end: end.value,
+            reason: reason.value,
+            notes: notes.value,
+            status: 'pending'
+            })
+
+            emit('submitted', res.data)
+        } catch (err) {
+            console.error('Failed to create appointment:', err)
+            alert('Failed to create appointment, please try again.')
+        }
+    }
+    
+    watch(() => props.event, (newVal) => {
+        if (!newVal) {
+            doctorId.value = '';
+            patientId.value = '';
+            time.value = '';
+            reason.value = '';
+            notes.value = '';
+        }
+    });
 </script>
 
 <style scoped>

@@ -5,6 +5,7 @@
     <AppointmentsModal
       v-if="showModal"
       :date="selectedDate"
+      :event="selectedEvent"
       @close="showModal = false"
       @submitted="handleSubmitted"
     />
@@ -24,8 +25,8 @@ import AppointmentsModal from '../components/AppointmentsModal.vue';
 const calendarRef = ref(null);
 const showModal = ref(false);
 const selectedDate = ref('');
+const selectedEvent = ref('')
 
-// Calendar options
 const calendarOptions = ref({
   plugins: [dayGridPlugin, interactionPlugin, multiMonthPlugin],
   headerToolbar: {
@@ -33,11 +34,19 @@ const calendarOptions = ref({
     center: 'title',
     right: 'multiMonthYear,dayGridMonth,dayGridWeek'
   },
+  eventlimit: 4,
   initialView: 'dayGridMonth',
+  displayEventEnd: true,
   dateClick(info) {
     selectedDate.value = info.dateStr;
+    selectedEvent.value = null;
     showModal.value = true;
   },
+  eventClick(info) {
+    selectedEvent.value = info.event;
+    selectedDate.value = info.event.startStr;
+    showModal.value = true;
+  } ,
   dayCellDidMount(info) {
     info.el.addEventListener('mouseenter', () => {
       info.el.style.backgroundColor = '#f0f8ff';
@@ -50,7 +59,6 @@ const calendarOptions = ref({
 });
 
 const toISO = (dateStr) => {
-  // Try to parse and convert to ISO string, fallback to original if invalid
   const d = new Date(dateStr);
   return !isNaN(d) ? d.toISOString() : '';
 };
@@ -75,7 +83,7 @@ const fetchAppointments = async () => {
           }
         };
       })
-      .filter(Boolean); // Remove any nulls
+      .filter(Boolean);
     calendarOptions.value.events = validEvents;
   } catch (err) {
     console.error('Failed to fetch appointments:', err);
