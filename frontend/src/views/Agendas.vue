@@ -3,8 +3,8 @@
     <h2>Doctor Agendas</h2>
 
     <!-- Doctor Selection -->
-    <div class="field mb-4">
-      <label class="label has-text-black" for="doctor-select">Select Doctor:</label>
+    <div class="field select-field">
+      <label class="label" for="doctor-select">Select Doctor:</label>
       <div class="control">
         <div class="select is-fullwidth">
           <select id="doctor-select" v-model="selectedDoctorId">
@@ -18,31 +18,41 @@
     </div>
 
     <!-- Loading/Error -->
-    <div v-if="loading" class="notification is-info">Loading agenda...</div>
-    <div v-else-if="error" class="notification is-danger">{{ error }}</div>
+    <div v-if="loading" class="notification is-light is-info">Loading agenda...</div>
+    <div v-else-if="error" class="notification is-light is-danger">{{ error }}</div>
 
-    <!-- Appointments Table -->
-    <div class="card" v-else>
-      <table class="patients-table">
-        <thead>
-          <tr>
-            <th>Patient</th>
-            <th>Start</th>
-            <th>End</th>
-            <th>Reason</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="appt in filteredAppointments" :key="appt._id">
-            <td>{{ appt.patientId.firstName }} {{ appt.patientId.lastName }}</td>
-            <td>{{ formatDate(appt.start) }}</td>
-            <td>{{ formatDate(appt.end) }}</td>
-            <td>{{ appt.reason }}</td>
-            <td>{{ appt.status }}</td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- Appointment Cards Grid -->
+    <div v-else class="cards-container">
+      <div
+        v-if="filteredAppointments.length === 0"
+        class="no-appointments"
+      >
+        No appointments found for selected doctor.
+      </div>
+      <div
+        v-for="appt in filteredAppointments"
+        :key="appt._id"
+        class="appointment-card"
+      >
+        <div class="card-header">
+          <h3>{{ appt.patientId.firstName }} {{ appt.patientId.lastName }}</h3>
+          <span
+            class="tag"
+            :class="{
+              'is-success': appt.status === 'Confirmed',
+              'is-warning': appt.status === 'Pending',
+              'is-danger': appt.status === 'Cancelled'
+            }"
+          >
+            {{ appt.status }}
+          </span>
+        </div>
+        <div class="card-body">
+          <p><strong>Start:</strong> {{ formatDate(appt.start) }}</p>
+          <p><strong>End:</strong> {{ formatDate(appt.end) }}</p>
+          <p><strong>Reason:</strong> {{ appt.reason }}</p>
+        </div>
+      </div>
     </div>
   </main>
 </template>
@@ -50,40 +60,23 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 
+const doctors = ref([])
+const appointments = ref([])
+const selectedDoctorId = ref('')
 const loading = ref(true)
 const error = ref(null)
-const selectedDoctorId = ref('')
 
-// Static list of doctors (replace IDs with real ones as needed)
-const doctors = ref([
-  {
-    _id: '666a0d2732b6a3aa084f1831',
-    firstName: 'Alice',
-    lastName: 'Nguyen',
-    specialization: 'Cardiology'
-  },
-  {
-    _id: '666a0d2732b6a3aa084f1832',
-    firstName: 'Brian',
-    lastName: 'Smith',
-    specialization: 'Dermatology'
-  },
-  {
-    _id: '666a0d2732b6a3aa084f1833',
-    firstName: 'Clara',
-    lastName: 'Zhou',
-    specialization: 'Pediatrics'
-  }
-])
-
-const appointments = ref([])
-
-const fetchAppointments = async () => {
+const fetchData = async () => {
   loading.value = true
   try {
-    const res = await fetch('https://emr-backend-h03z.onrender.com/api/appointments')
-    if (!res.ok) throw new Error('Failed to fetch appointments')
-    appointments.value = await res.json()
+    const [doctorsRes, apptRes] = await Promise.all([
+      fetch('https://emr-backend-h03z.onrender.com/api/doctors'),
+      fetch('https://emr-backend-h03z.onrender.com/api/appointments')
+    ])
+    if (!doctorsRes.ok || !apptRes.ok) throw new Error('Failed to fetch data')
+
+    doctors.value = await doctorsRes.json()
+    appointments.value = await apptRes.json()
   } catch (err) {
     error.value = err.message
   } finally {
@@ -101,58 +94,90 @@ const formatDate = (dateStr) => {
   return d.toLocaleString()
 }
 
-onMounted(fetchAppointments)
+onMounted(fetchData)
 </script>
 
 <style scoped>
 .home-screen {
   padding: 2rem;
   font-family: 'Geist Sans', sans-serif;
-  background: #fff;
+  background: #f8f9fb;
   min-height: 100vh;
 }
 
-.home-screen h2 {
-  margin-bottom: 1rem;
-  font-size: 2.5rem;
-  font-weight: bold;
-  border-bottom: 2px solid #2b2e3b;
+h2 {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: #2e3a59;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #d8dbe0;
   padding-bottom: 0.5rem;
 }
 
-.card {
-  background: #fff;
-  border-radius: 20px;
-  box-shadow: 0 2px 18px rgba(34, 42, 66, 0.08);
-  padding: 2rem;
-  margin-top: 2rem;
-  overflow-x: auto;
+.select-field {
+  margin-bottom: 1.5rem;
+  max-width: 500px;
 }
 
-.patients-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 1.08rem;
-  color: #262a33;
-}
-
-.patients-table th,
-.patients-table td {
-  padding: 1rem;
-  text-align: left;
-}
-
-.patients-table th {
+.label {
   font-weight: 600;
-  color: #9ea1b3;
-  border-bottom: 2px solid #f0f0f0;
+  margin-bottom: 0.5rem;
+  color: #444;
 }
 
-.patients-table tr {
-  border-bottom: 1px solid #f0f0f0;
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
 }
 
-.input::placeholder {
-  color: #555 !important;
+.appointment-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.05);
+  padding: 1.25rem 1.5rem;
+  transition: transform 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.appointment-card:hover {
+  transform: translateY(-3px);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.card-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.card-body p {
+  margin: 0.3rem 0;
+  color: #555;
+  font-size: 0.95rem;
+}
+
+.tag {
+  font-size: 0.85rem;
+  border-radius: 8px;
+  padding: 0.35rem 0.75rem;
+  font-weight: 600;
+}
+
+.no-appointments {
+  font-style: italic;
+  color: #888;
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 2rem;
 }
 </style>
