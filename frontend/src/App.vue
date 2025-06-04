@@ -24,6 +24,7 @@ export default {
       menuItems: [
         { svg: homeSvg, label: 'Home', route: '/' },
         { svg: fileSvg, label: 'Records', route: '/records' },
+        { svg: fileSvg, label: 'Agendas', route: '/agendas' },
         { svg: calendarSvg, label: 'Appointments', route: '/appointments' },
         { svg: graphSvg, label: 'Reports', route: '/reports' },
         { svg: gearSvg, label: 'Settings', route: '/settings' },

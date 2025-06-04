@@ -7,6 +7,7 @@ import Records from '@/views/Records.vue'
 import Reports from '@/views/Reports.vue'
 import Profile from '@/views/Profile.vue'
 import PatientEdit from '@/views/PatientEdit.vue'
+import Agendas from '@/views/Agendas.vue'
 
 const routes = [
   { path: '/',      name: 'Home',  component: Home },
@@ -16,6 +17,7 @@ const routes = [
   { path: '/reports', name: 'Reports', component: Reports },
   { path: '/profile', name: 'Profile', component: Profile },
   { path: '/records/:id', name: 'PatientEdit', component: PatientEdit },
+  { path: '/agendas', name: 'Agendas', component: Agendas },
 
 ]
 
