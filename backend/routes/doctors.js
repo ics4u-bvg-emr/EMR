@@ -1,11 +1,11 @@
 import express from 'express'
-import mongoose from 'mongoose'
+import Doctor from '../models/Doctor.js'
 
 const router=express.Router()
 
 router.get('/doctors',async(req,res)=>{
     try{
-        const doctors=await mongoose.connection.db.collection('doctors').find({}).toArray()
+        const doctors=await Doctor.find()
         res.status(200).json(doctors)
     }catch(error){
         res.status(500).json(error)
