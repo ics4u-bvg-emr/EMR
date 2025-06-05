@@ -1,5 +1,5 @@
 <template>
-   <main class="patient-edit-screen" ref="pdfRef">
+  <main class="patient-edit-screen" ref="pdfRef">
     <div class="header-row">
       <div class="avatar"></div>
       <div>
@@ -9,7 +9,7 @@
         </div>
       </div>
       <div class="header-actions">
-        <button class="btn-primary" @click="savePatient">Save</button>
+        <button class="btn-primary btn-save" @click="savePatient">Save</button>
         <button class="btn-outline" @click="cancelEdit">Cancel</button>
         <button class="btn-outline" @click="exportReferralPdf()">Download Referral</button>
         <button class="btn-outline" @click="exportPrescriptionPdf()">Download Prescription</button>
@@ -116,12 +116,229 @@
         <button class="add-btn" @click="addEncounter">+ Add Encounter</button>
       </div>
     </section>
-    <!-- Timeline/Profile tabs can be added here -->
+
+    <section v-if="currentTab === 'Diagnose'">
+      <div class="horizontal-timeline">
+        <div
+          v-for="(step, idx) in diagnoseSteps"
+          :key="step.label"
+          class="timeline-step-horizontal"
+        >
+          <div
+            class="timeline-circle-horizontal"
+            :class="{
+              active: currentStep === idx,
+              completed: idx < currentStep
+            }"
+          >
+            {{ idx + 1 }}
+          </div>
+          <div class="timeline-label" v-html="step.label.replace(/\n/g, '<br>')"></div>
+          <div v-if="currentStep === idx" class="timeline-step-indicator">Current Step</div>
+        </div>
+      </div>
+      <div class="timeline-fields">
+        <!-- Step 1: Symptoms -->
+        <div v-if="currentStep === 0">
+          <h3>Symptoms</h3>
+          <div class="symptoms-list">
+            <label
+              v-for="symptom in commonSymptoms"
+              :key="symptom"
+              class="symptom-checkbox"
+            >
+              <input
+                type="checkbox"
+                :value="symptom"
+                v-model="diagnoseFields.symptoms"
+              />
+              {{ symptom }}
+            </label>
+            <label class="symptom-checkbox">
+              <input
+                type="checkbox"
+                value="Other"
+                v-model="diagnoseFields.symptoms"
+                @change="showOtherSymptom = !showOtherSymptom"
+              />
+              Other
+            </label>
+            <input
+              v-if="showOtherSymptom"
+              v-model="diagnoseFields.otherSymptom"
+              class="input"
+              placeholder="Describe other symptom"
+            />
+          </div>
+          <button
+            class="btn-primary"
+            :disabled="!canProceedSymptoms"
+            @click="nextStep"
+          >
+            Next
+          </button>
+        </div>
+        <!-- Step 2: Examination -->
+        <div v-else-if="currentStep === 1">
+          <h3>Examination</h3>
+          <div class="exam-section">
+            <div class="exam-group">
+              <div class="exam-title">General</div>
+              <div class="exam-row">
+                <div class="exam-field">
+                  <label>Temperature</label>
+                  <input v-model="diagnoseFields.examinationFields.temperature" type="text" placeholder="°C" />
+                </div>
+                <div class="exam-field">
+                  <label>Pulse rate</label>
+                  <input v-model="diagnoseFields.examinationFields.pulse" type="text" placeholder="bpm" />
+                </div>
+                <div class="exam-field">
+                  <label>Blood pressure</label>
+                  <input v-model="diagnoseFields.examinationFields.bp" type="text" placeholder="mmHg" />
+                </div>
+                <div class="exam-field">
+                  <label>Respiratory rate</label>
+                  <input v-model="diagnoseFields.examinationFields.resp" type="text" placeholder="bpm" />
+                </div>
+                <div class="exam-field">
+                  <label>SPO2</label>
+                  <input v-model="diagnoseFields.examinationFields.spo2" type="text" placeholder="%" />
+                </div>
+              </div>
+              <div class="exam-row">
+                <div class="exam-field">
+                  <label>Weight</label>
+                  <input v-model="diagnoseFields.examinationFields.weight" type="text" placeholder="kg" />
+                </div>
+                <div class="exam-field">
+                  <label>Height</label>
+                  <input v-model="diagnoseFields.examinationFields.height" type="text" placeholder="cm" />
+                </div>
+                <div class="exam-field">
+                  <label>Waist circumference</label>
+                  <input v-model="diagnoseFields.examinationFields.waist" type="text" placeholder="cm" />
+                </div>
+                <div class="exam-field">
+                  <label>BMI</label>
+                  <input v-model="diagnoseFields.examinationFields.bmi" type="text" placeholder="" />
+                </div>
+              </div>
+            </div>
+            <div class="exam-group exam-accordion">
+              <div class="exam-accordion-title" @click="toggleExamAccordion('cholesterol')">
+                Cholestrol &amp; heart function
+              </div>
+              <div v-if="examAccordion.cholesterol" class="exam-accordion-content">
+                <div class="exam-row">
+                  <div class="exam-field">
+                    <label>LDL</label>
+                    <input v-model="diagnoseFields.examinationFields.ldl" type="text" placeholder="mg/dL" />
+                  </div>
+                  <div class="exam-field">
+                    <label>HDL</label>
+                    <input v-model="diagnoseFields.examinationFields.hdl" type="text" placeholder="mg/dL" />
+                  </div>
+                  <div class="exam-field">
+                    <label>Triglycerides</label>
+                    <input v-model="diagnoseFields.examinationFields.triglycerides" type="text" placeholder="mg/dL" />
+                  </div>
+                </div>
+              </div>
+              <div class="exam-accordion-title" @click="toggleExamAccordion('dipstick')">
+                Dipstick tests
+              </div>
+              <div v-if="examAccordion.dipstick" class="exam-accordion-content">
+                <div class="exam-row">
+                  <div class="exam-field">
+                    <label>Protein</label>
+                    <input v-model="diagnoseFields.examinationFields.protein" type="text" />
+                  </div>
+                  <div class="exam-field">
+                    <label>Glucose</label>
+                    <input v-model="diagnoseFields.examinationFields.dipstickGlucose" type="text" />
+                  </div>
+                  <div class="exam-field">
+                    <label>Blood</label>
+                    <input v-model="diagnoseFields.examinationFields.blood" type="text" />
+                  </div>
+                </div>
+              </div>
+              <div class="exam-accordion-title" @click="toggleExamAccordion('glucose')">
+                Glucose &amp; diabetes
+              </div>
+              <div v-if="examAccordion.glucose" class="exam-accordion-content">
+                <div class="exam-row">
+                  <div class="exam-field">
+                    <label>Fasting glucose</label>
+                    <input v-model="diagnoseFields.examinationFields.fastingGlucose" type="text" placeholder="mg/dL" />
+                  </div>
+                  <div class="exam-field">
+                    <label>HbA1c</label>
+                    <input v-model="diagnoseFields.examinationFields.hba1c" type="text" placeholder="%" />
+                  </div>
+                </div>
+              </div>
+              <div class="exam-accordion-title" @click="toggleExamAccordion('other')">
+                Other
+              </div>
+              <div v-if="examAccordion.other" class="exam-accordion-content">
+                <textarea v-model="diagnoseFields.examinationFields.other" class="timeline-textarea" placeholder="Other findings"></textarea>
+              </div>
+            </div>
+          </div>
+          <button
+            class="btn-primary"
+            :disabled="!canProceedExamination"
+            @click="nextStep"
+          >
+            Next
+          </button>
+        </div>
+        <!-- Step 3: Diagnose & Prescribe -->
+        <div v-else-if="currentStep === 2">
+          <h3>Diagnose &amp; Prescribe</h3>
+          <textarea
+            v-model="diagnoseFields.diagnosis"
+            class="timeline-textarea"
+            placeholder="Enter diagnosis"
+          ></textarea>
+          <textarea
+            v-model="diagnoseFields.prescription"
+            class="timeline-textarea"
+            placeholder="Enter prescriptions"
+          ></textarea>
+          <button
+            class="btn-primary"
+            :disabled="!diagnoseFields.diagnosis.trim() || !diagnoseFields.prescription.trim()"
+            @click="nextStep"
+          >
+            Next
+          </button>
+        </div>
+        <!-- Step 4: Plan -->
+        <div v-else-if="currentStep === 3">
+          <h3>Plan</h3>
+          <textarea
+            v-model="diagnoseFields.plan"
+            class="timeline-textarea"
+            placeholder="Outline the treatment plan"
+          ></textarea>
+          <button
+            class="btn-primary"
+            :disabled="!diagnoseFields.plan.trim()"
+            @click="finishDiagnose"
+          >
+            Finish
+          </button>
+        </div>
+      </div>
+    </section>
   </main>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
@@ -129,7 +346,7 @@ import axios from 'axios'
 
 const router = useRouter()
 const pdfInput = ref()
-const tabs = ref(['Summary', 'Timeline', 'Profile'])
+const tabs = ref(['Summary', 'Diagnose'])
 const currentTab = ref('Summary')
 
 const patient = ref({
@@ -351,14 +568,101 @@ function savePatient() {
 function cancelEdit() {
   router.back()
 }
+
+const diagnoseSteps = [
+  { label: 'SYMPTOMS' },
+  { label: 'EXAMINE' },
+  { label: 'DIAGNOSE' },
+  { label: 'PLAN' }
+]
+const currentStep = ref(0)
+const showOtherSymptom = ref(false)
+const diagnoseFields = ref({
+  symptoms: [],
+  otherSymptom: '',
+  examinationFields: {
+    temperature: '',
+    pulse: '',
+    bp: '',
+    resp: '',
+    spo2: '',
+    weight: '',
+    height: '',
+    waist: '',
+    bmi: '',
+    ldl: '',
+    hdl: '',
+    triglycerides: '',
+    protein: '',
+    dipstickGlucose: '',
+    blood: '',
+    fastingGlucose: '',
+    hba1c: '',
+    other: ''
+  },
+  diagnosis: '',
+  prescription: '',
+  plan: ''
+})
+
+const examAccordion = ref({
+  cholesterol: false,
+  dipstick: false,
+  glucose: false,
+  other: false
+})
+
+function toggleExamAccordion(section) {
+  examAccordion.value[section] = !examAccordion.value[section]
+}
+
+const commonSymptoms = [
+  'Fever', 'Cough', 'Headache', 'Fatigue', 'Nausea', 'Vomiting', 'Diarrhea', 'Shortness of breath', 'Chest pain', 'Abdominal pain',
+  'Back pain', 'Joint pain', 'Muscle pain', 'Sore throat', 'Runny nose', 'Sneezing', 'Rash', 'Dizziness', 'Palpitations', 'Swelling',
+  'Weight loss', 'Weight gain', 'Night sweats', 'Chills', 'Loss of appetite', 'Blurred vision', 'Hearing loss', 'Ear pain', 'Nasal congestion', 'Itching',
+  'Burning sensation', 'Frequent urination', 'Painful urination', 'Blood in urine', 'Constipation', 'Heartburn', 'Indigestion', 'Loss of taste', 'Loss of smell', 'Difficulty swallowing',
+  'Hoarseness', 'Cramps', 'Tingling', 'Numbness', 'Memory loss', 'Confusion', 'Anxiety', 'Depression', 'Insomnia', 'Bruising'
+]
+
+const canProceedSymptoms = computed(() => {
+  return (
+    diagnoseFields.value.symptoms.length > 0 &&
+    (!diagnoseFields.value.symptoms.includes('Other') || diagnoseFields.value.otherSymptom.trim())
+  )
+})
+
+const canProceedExamination = computed(() => {
+  // At least one field filled in general section
+  const fields = diagnoseFields.value.examinationFields
+  return (
+    fields.temperature ||
+    fields.pulse ||
+    fields.bp ||
+    fields.resp ||
+    fields.spo2 ||
+    fields.weight ||
+    fields.height ||
+    fields.waist ||
+    fields.bmi
+  )
+})
+
+function nextStep() {
+  if (currentStep.value < diagnoseSteps.length - 1) {
+    currentStep.value++
+  }
+}
+function finishDiagnose() {
+  // Finalize logic here
+  alert('Diagnosis completed!')
+}
 </script>
 
 <style scoped>
 .patient-edit-screen {
   font-family: 'Geist Sans', sans-serif;
-  background: #fff;
   min-height: 100vh;
-  padding: 0; /* Removed padding */
+  padding: 0;
 }
 .header-row {
   display: flex;
@@ -389,7 +693,7 @@ function cancelEdit() {
   gap: 1rem;
 }
 .btn-primary {
-  background: #ff9800;
+  background: #304ffe; /* blue for Save */
   color: #fff;
   border: none;
   padding: 0.7rem 1.5rem;
@@ -398,14 +702,19 @@ function cancelEdit() {
   font-size: 1rem;
   cursor: pointer;
   transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(33,50,80,0.10);
 }
 .btn-primary:hover {
-  background: #e68900;
+  background: #1a32b7; /* darker blue on hover */
+}
+.btn-primary:disabled {
+  background: #bdbdbd;
+  cursor: not-allowed;
 }
 .btn-outline {
   background: #fff;
-  color: #ff9800;
-  border: 2px solid #ff9800;
+  color: #757575; /* grey */
+  border: 2px solid #757575; /* grey */
   padding: 0.7rem 1.5rem;
   border-radius: 7px;
   font-weight: 600;
@@ -414,7 +723,7 @@ function cancelEdit() {
   transition: background 0.2s, color 0.2s;
 }
 .btn-outline:hover {
-  background: #fff3e0;
+  background: #f5f5f5;
 }
 .tabs-row {
   display: flex;
@@ -552,5 +861,262 @@ function cancelEdit() {
   .header-actions {
     margin-left: 0;
   }
+}
+.timeline {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin: 2rem 0 0 2rem;
+  position: relative;
+}
+.timeline-step {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+.timeline-circle {
+  width: 36px;
+  height: 36px;
+  background: #2196f3;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.3rem;
+  margin-right: 1.2rem;
+  box-shadow: 0 2px 8px rgba(33,150,243,0.10);
+  z-index: 1;
+}
+.timeline-content {
+  background: #f7fafd;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  min-width: 220px;
+  box-shadow: 0 1px 4px 0 rgba(33,150,243,0.06);
+}
+.timeline-line {
+  width: 3px;
+  height: 32px;
+  background: #b3e0fc;
+  margin: 0 17px;
+  position: relative;
+  left: 16px;
+}
+.horizontal-timeline {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  margin: 2.5rem 0 2rem 0;
+  position: relative;
+  min-height: 120px;
+  width: 100%;
+  gap: 0;
+}
+.timeline-step-horizontal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex: 1;
+  min-width: 120px;
+  margin: 0;
+  z-index: 2;
+}
+.timeline-circle-horizontal {
+  width: 80px;
+  height: 80px;
+  background: #e0e0e0;
+  color: #757575;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 2.5rem;
+  margin-bottom: 0.3rem;
+  border: none;
+  box-shadow: 0 4px 16px 0 rgba(40, 44, 63, 0.18), 0 2px 8px rgba(33, 50, 80, 0.13);
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.timeline-circle-horizontal.active {
+  background: #304ffe;
+  color: #fff;
+}
+.timeline-circle-horizontal.completed {
+  background: #304ffe;
+  color: #fff;
+  opacity: 0.7;
+}
+.timeline-label {
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 0.1rem;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  margin-top: 0.05rem;
+  line-height: 1.1;
+  max-width: 110px;
+  word-break: break-word;
+  white-space: pre-line;
+}
+.timeline-bar-horizontal {
+  display: none !important;
+}
+.timeline-step-indicator {
+  margin-top: 0.2rem;
+  font-size: 0.85rem;
+  color: #304ffe;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+/* Center the timeline and make it 1/4 width on large screens */
+@media (min-width: 900px) {
+  .horizontal-timeline {
+    width: 35%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+.timeline-fields {
+  margin: 2rem auto 0 auto;
+  max-width: 1100px;
+  width: 100%;
+  box-shadow: 0 4px 24px 0 rgba(40, 44, 63, 0.13), 0 2px 8px rgba(33, 50, 80, 0.10);
+  border-radius: 18px;
+  background: #fff;
+  padding: 2.5rem 2rem 2rem 2rem;
+}
+.timeline-textarea {
+  width: 100%;
+  min-height: 80px;
+  margin-bottom: 1.2rem;
+  border: 1.5px solid #1a237e;
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  font-size: 1.08rem;
+  background: #f5f7fa;
+  color: #222;
+  resize: vertical;
+  box-sizing: border-box;
+  transition: border 0.2s;
+  box-shadow: 0 1px 4px 0 rgba(33,50,80,0.08);
+}
+.timeline-textarea:focus {
+  border: 1.5px solid #0d1333;
+  outline: none;
+}
+.symptoms-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem 1.2rem;
+  margin-bottom: 1.5rem;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1rem;
+  background: #fafbfc;
+}
+.symptom-checkbox {
+  display: flex;
+  align-items: center;
+  font-size: 1rem;
+  gap: 0.4rem;
+  min-width: 160px;
+}
+.exam-section {
+  background: #fafbfc;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px 0 rgba(33,150,243,0.06);
+  padding: 2rem 2rem 1.5rem 2rem;
+  margin-bottom: 2rem;
+}
+.exam-group {
+  margin-bottom: 1.5rem;
+}
+.exam-title {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 1.2rem;
+  color: #444;
+}
+.exam-row {
+  display: flex;
+  gap: 1.2rem;
+  margin-bottom: 1.2rem;
+  flex-wrap: wrap;
+}
+.exam-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  flex: 1;
+}
+.exam-field label {
+  font-size: 1rem;
+  color: #888;
+  margin-bottom: 0.3rem;
+}
+.exam-field input {
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 1rem;
+  color: #262a33;
+  background: #fff;
+}
+.exam-accordion {
+  background: #f3f3f3;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px 0 rgba(33,150,243,0.03);
+  padding: 0.5rem 1rem 1rem 1rem;
+}
+.exam-accordion-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #7a7e8a;
+  margin: 1.1rem 0 0.5rem 0;
+  cursor: pointer;
+  transition: color 0.2s;
+  user-select: none;
+}
+.exam-accordion-title:hover {
+  color: #2196f3;
+}
+.exam-accordion-content {
+  margin-bottom: 0.7rem;
+  padding-left: 0.5rem;
+}
+.btn-save {
+  background: #304ffe;
+  color: #fff;
+}
+.btn-save:hover {
+  background: #1a32b7;
+}
+.btn-primary {
+  background: #304ffe; /* blue for Save */
+  color: #fff;
+  border: none;
+  padding: 0.7rem 1.5rem;
+  border-radius: 7px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(33,50,80,0.10);
+}
+.btn-primary:hover {
+  background: #1a32b7; /* darker blue on hover */
+}
+.btn-primary:disabled {
+  background: #bdbdbd;
+  cursor: not-allowed;
 }
 </style>
