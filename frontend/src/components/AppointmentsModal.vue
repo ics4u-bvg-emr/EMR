@@ -140,25 +140,77 @@
 .modal-content {
   background: #fff;
   padding: 2rem;
-  border-radius: 8px;
-  width: 400px;
-  position: relative;
-  z-index: 10000;
+  border-radius: 12px;
+  width: 420px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  font-family: "Segoe UI", sans-serif;
+  color: #333;
 }
+
+.modal-content h3 {
+  margin-top: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #222;
+}
+
 .modal-content form {
   display: flex;
   flex-direction: column;
 }
+
 .modal-content label {
-  margin-top: 10px;
+  margin-top: 12px;
+  font-weight: 500;
+  color: #555;
 }
+
 .modal-content input,
+.modal-content select,
 .modal-content textarea {
-  padding: 8px;
+  padding: 10px;
+  margin-top: 6px;
   margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.95rem;
 }
+
 .actions {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 1rem;
+}
+
+.actions button {
+  padding: 8px 14px;
+  font-size: 0.95rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.actions button[type="submit"] {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.actions button[type="submit"]:hover {
+  background-color: #45a049;
+}
+
+.actions button[type="button"] {
+  background-color: #eee;
+  color: #333;
+}
+
+.actions button[type="button"]:hover {
+  background-color: #ddd;
+}
+
+.actions button:active {
+  transform: scale(0.98);
 }
 </style>
