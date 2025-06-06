@@ -1,23 +1,81 @@
-import express from 'express'
-import Doctor from '../models/Doctor.js'
+import express from 'express';
+import Doctor from '../models/Doctor.js';
+import mongoose from 'mongoose';
 
-const router=express.Router()
+const router = express.Router();
+const ObjectId = mongoose.Types.ObjectId;
 
-router.get('/doctors',async(req,res)=>{
-    try{
-        const doctors=await Doctor.find()
-        res.status(200).json(doctors)
-    }catch(error){
-        res.status(500).json(error)
+router.get('/doctors', async (req, res) => {
+    try {
+        const doctors = await Doctor.find();
+        res.status(200).json(doctors);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching doctors', error: error.message });
     }
-})
+});
 
-// router.post('/doctors',async(req,res)=>{
-//     try{
-        
-//     }catch(error){
-//         res.status(500).json(error)
-//     }
-// })
+router.get('/doctors/:id', async (req, res) => {
+    const { id } = req.params;
 
-export default router
+    if (!ObjectId.isValid(id)) {
+        return res.status(400).json({ message: 'Invalid doctor ID' });
+    }
+
+    try {
+        const doctor = await Doctor.findById(id);
+        if (!doctor) return res.status(404).json({ message: 'Doctor not found' });
+        res.status(200).json(doctor);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching doctor', error: error.message });
+    }
+});
+
+router.post('/doctors', async (req, res) => {
+    try {
+        const { firstName, lastName, specialization, username, email, password, role } = req.body;
+
+        if (!firstName || !lastName || !username || !email || !password) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        const doctor = new Doctor({ firstName, lastName, specialization, username, email, password, role });
+        const savedDoctor = await doctor.save();
+        res.status(201).json(savedDoctor);
+    } catch (error) {
+        res.status(500).json({ message: 'Error creating doctor', error: error.message });
+    }
+});
+
+router.put('/doctors/:id', async (req, res) => {
+    const { id } = req.params;
+
+    if (!ObjectId.isValid(id)) {
+        return res.status(400).json({ message: 'Invalid doctor ID' });
+    }
+
+    try {
+        const updatedDoctor = await Doctor.findByIdAndUpdate(id, req.body, { new: true });
+        if (!updatedDoctor) return res.status(404).json({ message: 'Doctor not found' });
+        res.status(200).json(updatedDoctor);
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating doctor', error: error.message });
+    }
+});
+
+router.delete('/doctors/:id', async (req, res) => {
+    const { id } = req.params;
+
+    if (!ObjectId.isValid(id)) {
+        return res.status(400).json({ message: 'Invalid doctor ID' });
+    }
+
+    try {
+        const deletedDoctor = await Doctor.findByIdAndDelete(id);
+        if (!deletedDoctor) return res.status(404).json({ message: 'Doctor not found' });
+        res.status(200).json({ message: 'Doctor deleted' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting doctor', error: error.message });
+    }
+});
+
+export default router;

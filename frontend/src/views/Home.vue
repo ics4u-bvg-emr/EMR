@@ -1,18 +1,11 @@
 <template>
-  <!-- Geist Sans from Vercel Fonts (official CDN) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@vercel/fonts@1.0.2/geist/Geist-Sans.min.css">
-
   <section class="section">
     <div class="container">
-
-      <!-- Top: Dashboard Title Bar -->
       <div class="dashboard-header mb-5">
         <h1 class="dashboard-title">Dashboard</h1>
       </div>
 
-      <!-- Top Stats Row (no gender card) -->
       <div class="columns is-multiline">
-        <!-- Welcome Card -->
         <div class="column is-8">
           <div class="box is-flex is-align-items-center">
             <span class="icon is-large has-text-danger mr-4">
@@ -20,34 +13,30 @@
             </span>
             <div>
               <h2 class="title is-4 mb-1">Welcome, Doctor</h2>
-              <p class="subtitle is-6 mb-0">You have <b>11</b> new messages and <b>5</b> notifications</p>
+              <p class="subtitle is-6 mb-0">
+                You have <b>{{ newMessages }}</b> new messages and <b>{{ newNotifications }}</b> notifications
+              </p>
             </div>
           </div>
         </div>
-        <!-- New Patients -->
         <div class="column is-2">
           <div class="box has-text-centered">
             <p class="heading">New Patients</p>
-            <p class="title is-3">16</p>
+            <p class="title is-3">{{ newPatients }}</p>
           </div>
         </div>
-        <!-- All Patients -->
         <div class="column is-2">
           <div class="box has-text-centered">
             <p class="heading">All Patients</p>
-            <p class="title is-3">58</p>
+            <p class="title is-3">{{ totalPatients }}</p>
           </div>
         </div>
       </div>
 
-      <!-- Agenda & News Row -->
       <div class="columns">
-        <!-- Agenda Table -->
         <div class="column is-7">
           <div class="box">
-            <p class="title is-6 mb-3">
-              Appointments for {{ formattedDate }}
-            </p>
+            <p class="title is-6 mb-3">Appointments for {{ formattedDate }}</p>
             <table class="table is-fullwidth is-hoverable is-size-7">
               <thead>
                 <tr>
@@ -58,57 +47,29 @@
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td>10:00 am</td>
-                  <td>Dillon Gentry</td>
-                  <td>(629) 555-0129</td>
-                  <td>Headache</td>
-                </tr>
-                <tr>
-                  <td>10:45 am</td>
-                  <td>Elise Mclellan</td>
-                  <td>(480) 555-0103</td>
-                  <td>Sore throat</td>
-                </tr>
-                <tr>
-                  <td>12:30 am</td>
-                  <td>Harvie Ratcliffe</td>
-                  <td>(671) 555-0110</td>
-                  <td>Stomach ache</td>
-                </tr>
-                <tr>
-                  <td>02:15 pm</td>
-                  <td>Eshan Terrell</td>
-                  <td>(201) 555-0124</td>
-                  <td>Headache</td>
+                <tr v-for="appt in todaysAppointments" :key="appt._id">
+                  <td>{{ new Date(appt.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }}</td>
+                  <td>{{ appt.patientId?.firstName }} {{ appt.patientId?.lastName }}</td>
+                  <td>{{ appt.patientId?.phone || 'N/A' }}</td>
+                  <td>{{ appt.reason }}</td>
                 </tr>
               </tbody>
             </table>
             <router-link class="is-size-7" to="/appointments">View all</router-link>
           </div>
         </div>
-        <!-- News & Updates -->
         <div class="column is-5">
           <div class="box">
             <p class="title is-6 mb-3">News & Updates</p>
-            <ul style="list-style: disc inside;" class="mb-3">
-              <li>Dillon Gentry bloodwork ready</li>
-              <li>Elise Mclellan allergy update</li>
-              <li>Harvie Ratcliffe X-ray uploaded</li>
-              <li>Eshan Terrell needs refill</li>
-              <li>Maya Hawkins physical done</li>
-              <li>Felix Calderon referral received</li>
-              <li>Maria Villegas immunization update</li>
-              <li>Insurance form pre-approved</li>
+            <ul class="mb-3" style="list-style: disc inside;">
+              <li v-for="note in notifications" :key="note">{{ note }}</li>
             </ul>
             <router-link class="is-size-7" to="/reports">View all</router-link>
           </div>
         </div>
       </div>
 
-      <!-- Stats & At a Glance Row -->
       <div class="columns">
-        <!-- Patient Statistics Placeholder -->
         <div class="column is-7">
           <div class="box">
             <p class="title is-6 mb-3">Patient statistics</p>
@@ -118,33 +79,43 @@
                 <span>(Graph Placeholder)</span>
               </span>
             </div>
-            <p>Total Patients: <b>58</b></p>
+            <p>Total Patients: <b>{{ totalPatients }}</b></p>
           </div>
         </div>
-        <!-- At a Glance -->
         <div class="column is-5">
           <div class="box">
             <p class="title is-6 mb-3">At a Glance</p>
             <ul>
-              <li>Pending Patient Intakes <b>12</b></li>
-              <li>Incomplete Patient Records <b>3</b></li>
-              <li>Fax Alerts <b>18</b></li>
+              <li>Pending Patient Intakes <b>{{ pendingIntakes }}</b></li>
+              <li>Incomplete Patient Records <b>{{ incompleteRecords }}</b></li>
+              <li>Fax Alerts <b>{{ faxAlerts }}</b></li>
             </ul>
             <router-link class="is-size-7" to="/records">View all</router-link>
           </div>
         </div>
       </div>
-
     </div>
   </section>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import circleUserSvg from '@/components/icons/circleuser.svg'
-
+import { ref, computed, onMounted } from 'vue'
+import axios from 'axios'
 
 const now = ref(new Date())
+const appointments = ref([])
+const totalPatients = ref(0)
+const newPatients = ref(0)
+const newMessages = ref(0)
+const newNotifications = ref(0)
+const notifications = ref([
+  'X-ray result ready',
+  'Allergy update received',
+  'Insurance form approved'
+])
+const pendingIntakes = ref(12)
+const incompleteRecords = ref(3)
+const faxAlerts = ref(18)
 
 const formattedDate = computed(() =>
   now.value.toLocaleDateString(undefined, {
@@ -155,21 +126,35 @@ const formattedDate = computed(() =>
   })
 )
 
-const formattedTime = computed(() =>
-  now.value.toLocaleTimeString(undefined, {
-    hour: '2-digit',
-    minute: '2-digit'
+const todaysAppointments = computed(() => {
+  return appointments.value.filter(appt => {
+    const date = new Date(appt.start)
+    return date.toDateString() === now.value.toDateString()
   })
-)
-
-let timer = null
-onMounted(() => {
-  timer = setInterval(() => {
-    now.value = new Date()
-  }, 1000 * 60)
 })
-onBeforeUnmount(() => {
-  clearInterval(timer)
+
+onMounted(async () => {
+  const token = localStorage.getItem('token')
+  const [apptRes, patientRes] = await Promise.all([
+    axios.get('/api/appointments/my', { headers: { Authorization: `Bearer ${token}` } }),
+    axios.get('/api/patients', { headers: { Authorization: `Bearer ${token}` } })
+  ])
+
+  appointments.value = Array.isArray(apptRes.data) ? apptRes.data : []
+  totalPatients.value = Array.isArray(patientRes.data) ? patientRes.data.length : 0
+  console.log("appointments:", apptRes.data)
+  console.log("patients:", patientRes.data)
+
+  newPatients.value = Array.isArray(patientRes.data)
+  ? patientRes.data.filter(p => {
+      const created = new Date(p.createdAt)
+      const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+      return created > oneWeekAgo
+    }).length
+  : 0
+
+  newMessages.value = 11
+  newNotifications.value = notifications.value.length
 })
 </script>
 

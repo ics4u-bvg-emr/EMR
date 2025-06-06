@@ -1,5 +1,6 @@
 import express from 'express';
 import Appointment from '../models/Appointment.js';
+import { requireAuth } from '../middleware/auth.js';
 import mongoose from "mongoose";
 
 const router = express.Router();
@@ -122,6 +123,20 @@ router.put('/appointments/:id', async (req, res) => {
             message: "Error updating appointment", 
             error: error.message 
         });
+    }
+});
+
+router.get('/appointments/my', requireAuth, async (req, res) => {
+    try {
+        const doctorId = req.user._id;
+
+        const appointments = await Appointment.find({ doctorId })
+            .populate('patientId', 'firstName lastName phone') 
+            .exec();
+
+        res.status(200).json(appointments);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching doctor's appointments", error: error.message });
     }
 });
 
