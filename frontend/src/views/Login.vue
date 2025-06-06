@@ -60,9 +60,7 @@
   import { useRouter } from 'vue-router';
   import axios from 'axios';
 
-  axios.defaults.baseURL = import.meta.env.MODE === 'development'
-    ? 'https://emr-backend-h03z.onrender.com'
-    : 'https://mevn-sports-scheduler.onrender.com';
+  axios.defaults.baseURL = 'https://emr-backend-h03z.onrender.com'
 
   const router = useRouter();
   const username = ref('');
