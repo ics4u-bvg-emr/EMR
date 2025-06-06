@@ -90,7 +90,7 @@
               <li>Incomplete Patient Records <b>{{ incompleteRecords }}</b></li>
               <li>Fax Alerts <b>{{ faxAlerts }}</b></li>
             </ul>
-            <router-link class="is-size-7" to="/records">View all</router-link>
+            <router-link class="is-size-7" to="/patients">View all</router-link>
           </div>
         </div>
       </div>

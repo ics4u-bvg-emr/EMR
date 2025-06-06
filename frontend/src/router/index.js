@@ -6,10 +6,10 @@ import Login from '@/views/Login.vue'
 import Settings from '@/views/Settings.vue'
 import Agendas from '@/views/Agendas.vue'
 import Appointments from '@/views/Appointments.vue'
-import Records from '@/views/Records.vue'
+import Patients from '@/views/Patients.vue'
 import Reports from '@/views/Reports.vue'
 import Profile from '@/views/Profile.vue'
-import PatientEdit from '@/views/PatientEdit.vue'
+import PatientEdit from '@/views/PatientView.vue'
 import DraftsList from '@/components/PatientDiagnosis/DraftsList.vue'
 import Register from '@/views/Register.vue'
 import RegisterDoctor from '@/views/RegisterDoctor.vue'
@@ -45,13 +45,16 @@ const routes = [
   { path: '/reset-password/:token', name: 'ResetPassword', component: ResetPassword },
   { path: '/dashboard', name: 'Dashboard', component: Home, meta: { requiresAuth: true, role: 'doctor' } },
   { path: '/settings', name: 'Settings', component: Settings, meta: { requiresAuth: true, role: ['doctor','receptionist'] } },
+  { path: '/agendas', name: 'Agendas', component: Agendas, meta: { requiresAuth: true, role: ['receptionist'] } },
+  { path: '/appointments', name: 'Appointments', component: Appointments, meta: { requiresAuth: true, role: ['doctor', 'receptionist'] } },
+  { path: '/patients', name: 'Patients', component: Patients, meta: { requiresAuth: true, role: 'doctor' } },
   { path: '/agendas', name: 'Agendas', component: Agendas, meta: { requiresAuth: true, role: 'receptionist' } },
   { path: '/appointments', name: 'Appointments', component: Appointments, meta: { requiresAuth: true, role: ['doctor','receptionist'] } },
   { path: '/records', name: 'Records', component: Records, meta: { requiresAuth: true, role: 'doctor' } },
   { path: '/reports', name: 'Reports', component: Reports, meta: { requiresAuth: true, role: 'doctor' } },
   { path: '/profile', name: 'Profile', component: Profile, meta: { requiresAuth: true, role: ['doctor','receptionist'] } },
-  { path: '/records/:id', name: 'PatientEdit', component: PatientEdit, meta: { requiresAuth: true, role: 'doctor' } },
-  { path: '/diagnosis/drafts', name: 'DiagnosisDrafts', component: DraftsList, meta: { requiresAuth: true, role: 'doctor' } }
+  { path: '/patients/:id', name: 'PatientEdit', component: PatientEdit, meta: { requiresAuth: true, role: 'doctor' } },
+  {path: '/diagnosis/drafts', name: 'DiagnosisDrafts', component: DraftsList, meta: { requiresAuth: true, role: 'doctor' }}
 ]
 
 const router = createRouter({

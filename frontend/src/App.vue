@@ -41,7 +41,7 @@ const hideSidebarRoutes = [
 
 const menuItems = [
   { svg: homeSvg, label: 'Home', route: '/dashboard', roles: ['doctor'] },
-  { svg: fileSvg, label: 'Records', route: '/records', roles: ['doctor'] },
+  { svg: fileSvg, label: 'Patients', route: '/patients', roles: ['doctor'] },
   { svg: fileSvg, label: 'Agendas', route: '/agendas', roles: ['receptionist'] },
   { svg: calendarSvg, label: 'Appointments', route: '/appointments', roles: ['doctor', 'receptionist'] },
   { svg: graphSvg, label: 'Reports', route: '/reports', roles: ['doctor'] },
