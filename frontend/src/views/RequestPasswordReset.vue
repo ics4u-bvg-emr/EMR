@@ -8,9 +8,9 @@
             <div class="control">
               <input v-model="email" type="email" class="input" placeholder="Enter your email" required />
             </div>
-           
+
           </div>
- 
+
           <div class="field">
             <button class="button is-link is-fullwidth" :disabled="loading">
               {{ loading ? 'Sending...' : 'Send Reset Link' }}
@@ -19,31 +19,31 @@
               Changed your mind?
               <RouterLink to="/login">Back to Login</RouterLink>
             </p>
- 
+
           </div>
- 
+
           <p v-if="message" class="has-text-success">{{ message }}</p>
           <p v-if="error" class="has-text-danger">{{ error }}</p>
         </form>
       </div>
     </section>
   </template>
- 
+
   <script setup>
   import { ref } from 'vue';
   import axios from 'axios';
-  axios.defaults.baseURL = "http://localhost:3000"
- 
+  axios.defaults.baseURL = "https://emr-backend-h03z.onrender.com"
+
   const email = ref('');
   const loading = ref(false);
   const message = ref('');
   const error = ref('');
- 
+
   const submitEmail = async () => {
     loading.value = true;
     message.value = '';
     error.value = '';
- 
+
     try {
       const res = await axios.post('/api/auth/request-password-reset', {
         email: email.value.trim(),
@@ -56,4 +56,4 @@
     }
   };
   </script>
- 
+

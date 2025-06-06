@@ -65,10 +65,10 @@ router.post('/register', async (req, res) => {
   
       await doctor.save();
   
-      const confirmLink = `http://localhost:5173/verify-email/${verificationToken}`;
+      const confirmLink = `https://emr-frontend-406r.onrender.com/verify-email/${verificationToken}`;
   
       await transporter.sendMail({
-        from: `"BVG Care" <${process.env.GMAIL_USER}>`,
+        from: `"BVG Care" <${process.env.EMAIL_USER}>`,
         to: doctor.email,
         subject: 'Confirm Your Email',
         html: `
@@ -100,10 +100,10 @@ router.post('/request-password-reset', async (req, res) => {
     user.resetTokenExpires = Date.now() + 3600000;
     await user.save();
  
-    const resetLink = `http://localhost:5173/reset-password/${token}`;
+    const resetLink = `https://emr-frontend-406r.onrender.com/reset-password/${token}`;
  
     await transporter.sendMail({
-      from: `"BVG Athletics" <${process.env.GMAIL_USER}>`,
+      from: `"BVG Athletics" <${process.env.EMAIL_USER}>`,
       to: user.email,
       subject: 'Reset Your Password',
       html: `

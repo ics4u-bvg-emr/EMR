@@ -99,7 +99,7 @@
         };
         return new Date(datetime).toLocaleString(undefined, options);
     }
-    
+
     watch(() => props.event, (newVal) => {
         if (!newVal) {
             doctorId.value = '';
