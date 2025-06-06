@@ -3,7 +3,7 @@
     <div class="layout">
       <Sidebar
         v-if="!hideSidebarRoutes.includes(route.path)"
-        :items="menuItems"
+        :items="filteredMenuItems"
         :user="currentUser"
       />
       <div class="content-area" :class="{ 'full-width': hideSidebarRoutes.includes(route.path) }">
@@ -14,9 +14,11 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { ref } from 'vue'
 import Sidebar from '@/components/Sidebar.vue'
+import { userRole } from '@/stores/user.js'
 
 import PatientTabs from '@/components/PatientTabs.vue'
 import gearSvg from '@/components/icons/gear.svg'
@@ -38,12 +40,12 @@ const hideSidebarRoutes = [
 ]
 
 const menuItems = [
-  { svg: homeSvg, label: 'Home', route: '/dashboard' },
-  { svg: fileSvg, label: 'Records', route: '/records' },
-  { svg: fileSvg, label: 'Agendas', route: '/agendas' },
-  { svg: calendarSvg, label: 'Appointments', route: '/appointments' },
-  { svg: graphSvg, label: 'Reports', route: '/reports' },
-  { svg: gearSvg, label: 'Settings', route: '/settings' },
+  { svg: homeSvg, label: 'Home', route: '/dashboard', roles: ['doctor'] },
+  { svg: fileSvg, label: 'Records', route: '/records', roles: ['doctor'] },
+  { svg: fileSvg, label: 'Agendas', route: '/agendas', roles: ['receptionist'] },
+  { svg: calendarSvg, label: 'Appointments', route: '/appointments', roles: ['doctor', 'receptionist'] },
+  { svg: graphSvg, label: 'Reports', route: '/reports', roles: ['doctor'] },
+  { svg: gearSvg, label: 'Settings', route: '/settings', roles: ['doctor', 'receptionist'] },
 ]
 
 const currentUser = {
@@ -51,6 +53,11 @@ const currentUser = {
   name: 'Jane Doe',
   route: '/profile'
 }
+
+// Use the reactive userRole from the store
+const filteredMenuItems = computed(() =>
+  menuItems.filter(item => !item.roles || item.roles.includes(userRole.value))
+)
 </script>
 
 <style>

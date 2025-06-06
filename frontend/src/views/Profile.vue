@@ -178,6 +178,7 @@
 import { ref, reactive, onMounted } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
+import { setUserRole } from '@/stores/user.js'
 
 const router = useRouter();
 const isEditing = ref(false);
@@ -211,39 +212,73 @@ onMounted(async () => {
     return;
   }
 
+  let decoded;
   try {
-    const decoded = JSON.parse(atob(token.split('.')[1]));
-    doctorId = decoded.id;
-
-    if (!doctorId) {
-      throw new Error('Invalid token: no doctor ID');
-    }
-
-    const res = await axios.get(`/api/doctors/${doctorId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    const data = res.data;
-    Object.assign(user, {
-      fullName: `${data.firstName} ${data.lastName}`,
-      username: data.username,
-      profilePhoto: data.profilePhoto || user.profilePhoto,
-      gender: data.gender || '',
-      dob: data.dob ? data.dob.split('T')[0] : '',
-      email: data.email,
-      phone: data.phone || '',
-      bio: data.bio || '',
-      address: data.address || '',
-      specialty: data.specialization || '',
-      experience: data.experience || 0,
-      certifications: data.certifications || '',
-      onCall: data.onCall || false,
-      hours: data.hours || '',
-      patientLoad: data.patientLoad || 0
-    });
-  } catch (err) {
-    console.error('Failed to load doctor profile:', err);
+    decoded = JSON.parse(atob(token.split('.')[1]));
+  } catch {
     router.push('/login');
+    return;
+  }
+
+  const role = decoded.role;
+  const userId = decoded.id;
+
+  if (!userId || !role) {
+    router.push('/login');
+    return;
+  }
+
+  try {
+    let res, data;
+    if (role === 'doctor') {
+      res = await axios.get(`/api/doctors/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      data = res.data;
+      Object.assign(user, {
+        fullName: `${data.firstName} ${data.lastName}`,
+        username: data.username,
+        profilePhoto: data.profilePhoto || user.profilePhoto,
+        gender: data.gender || '',
+        dob: data.dob ? data.dob.split('T')[0] : '',
+        email: data.email,
+        phone: data.phone || '',
+        bio: data.bio || '',
+        address: data.address || '',
+        specialty: data.specialization || '',
+        experience: data.experience || 0,
+        certifications: data.certifications || '',
+        onCall: data.onCall || false,
+        hours: data.hours || '',
+        patientLoad: data.patientLoad || 0
+      });
+    } else if (role === 'receptionist') {
+      res = await axios.get(`/api/receptionists/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      data = res.data;
+      Object.assign(user, {
+        fullName: `${data.firstName} ${data.lastName}`,
+        username: data.username,
+        profilePhoto: data.profilePhoto || user.profilePhoto,
+        email: data.email,
+        phone: data.phone || '',
+        bio: data.bio || '',
+        address: data.address || '',
+        // Add any other receptionist fields here
+      });
+    } else {
+      router.push('/login');
+      return;
+    }
+  } catch (err) {
+    // Only redirect if unauthorized (token expired/invalid)
+    if (err.response && err.response.status === 401) {
+      router.push('/login');
+    } else {
+      // Optionally show an error message for other errors
+      console.error('Failed to load profile:', err);
+    }
   }
 });
 
@@ -287,17 +322,20 @@ async function saveProfile() {
   }
 }
 
-function logout() {
-  localStorage.removeItem('token');
-  router.push('/login');
-}
-
 function onImageChange(event) {
   const file = event.target.files[0];
   if (file) {
     fileName.value = file.name;
     user.profilePhoto = URL.createObjectURL(file);
   }
+}
+
+function logout() {
+  localStorage.removeItem('token')
+  localStorage.removeItem('username')
+  localStorage.removeItem('loginAttempts')
+  setUserRole(null)
+  router.push('/login')
 }
 </script>
 
