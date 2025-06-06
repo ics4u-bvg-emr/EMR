@@ -1,9 +1,12 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
+import axios from 'axios'
 import { useDiagnosisStore } from './DiagnosisStore'
 
 const store = useDiagnosisStore()
 const medications = ref([{ name: '', dose: '', frequency: '' }])
+const interactions = ref([])
+const shownInteractions = ref(new Set())
 
 const commonDiagnoses = [
   'Hypertension', 'Type 2 Diabetes', 'Upper Respiratory Infection',
@@ -30,7 +33,7 @@ const removeMedication = (index) => {
 
 const canProceed = computed(() => {
   return (
-    store.diagnosis.diagnosis.trim() && 
+    store.diagnosis.diagnosis.trim() &&
     medications.value.some(med => med.name.trim())
   )
 })
@@ -39,10 +42,54 @@ const nextStep = () => {
   store.diagnosis.prescription = JSON.stringify(medications.value)
   store.nextStep()
 }
+
 const prevStep = () => store.prevStep()
+
 const saveDraft = () => {
   store.diagnosis.prescription = JSON.stringify(medications.value)
   store.saveDraft()
+}
+
+watch(medications, async () => {
+  const meds = medications.value.map(m => m.name.trim()).filter(Boolean)
+  const newInteractions = []
+
+  for (let i = 0; i < meds.length; i++) {
+    for (let j = i + 1; j < meds.length; j++) {
+      const key = `${meds[i]}|${meds[j]}`
+      if (shownInteractions.value.has(key)) continue
+
+      try {
+        const res = await axios.get('/api/drugs/interaction-check', {
+          params: { drug1: meds[i], drug2: meds[j] }
+        })
+
+        if (res.data.interactions) {
+          shownInteractions.value.add(key)
+          newInteractions.push({
+            drugA: meds[i],
+            drugB: meds[j],
+            description: res.data.interactions
+          })
+        }
+      } catch (err) {
+          if (axios.isAxiosError(err)) {
+            const a = meds[i], b = meds[j]
+            console.warn(`Could not check interaction between ${a} and ${b}`)
+          }
+      }
+    }
+  }
+
+  if (newInteractions.length) {
+    interactions.value.push(...newInteractions)
+    await nextTick()
+  }
+}, { deep: true })
+
+const resetInteractions = () => {
+  interactions.value = []
+  shownInteractions.value.clear()
 }
 </script>
 
@@ -98,6 +145,17 @@ const saveDraft = () => {
             Next: Treatmeant Plan →
         </button>
     </div>
+
+    <div v-if="interactions.length" class="interaction-popup">
+      <h4>⚠ Drug Interactions Detected</h4>
+      <ul>
+        <li v-for="(i, idx) in interactions" :key="idx">
+          <strong>{{ i.drugA }} + {{ i.drugB }}:</strong> {{ i.description }}
+        </li>
+      </ul>
+      <button class="dismiss-btn" @click="resetInteractions">Dismiss</button>
+    </div>
+
   </div>
 </template>
 
@@ -220,4 +278,38 @@ const saveDraft = () => {
   background-color: #a1c5f2;
   cursor: not-allowed;
 }
+
+.interaction-popup {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeeba;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 0 12px rgba(0,0,0,0.15);
+  z-index: 1000;
+  max-width: 400px;
+}
+
+.interaction-popup h4 {
+  margin: 0 0 0.5rem;
+}
+
+.interaction-popup ul {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.dismiss-btn {
+  margin-top: 1rem;
+  background: #856404;
+  color: white;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
 </style>
