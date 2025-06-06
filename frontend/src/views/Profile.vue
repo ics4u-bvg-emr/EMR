@@ -282,6 +282,31 @@ onMounted(async () => {
   }
 });
 
+async function onImageChange(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  fileName.value = file.name;
+
+  const localPreviewUrl = URL.createObjectURL(file);
+  user.profilePhoto = localPreviewUrl;
+
+  const formData = new FormData();
+  formData.append('photo', file);
+
+  try {
+    const res = await axios.put(`/api/doctors/${doctorId}/profile-photo`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+
+    user.profilePhoto = res.data.profilePhoto;
+  } catch (err) {
+    console.error('Failed to upload profile photo:', err);
+  }
+}
 
 function handleEditToggle() {
   if (isEditing.value) {
@@ -291,17 +316,17 @@ function handleEditToggle() {
 }
 
 async function saveProfile() {
-  const [firstName, lastName = ''] = user.fullName.trim().split(' ');
-
   try {
-    await axios.put(`/api/doctors/${doctorId}`, {
+    const [firstName, ...lastNameParts] = user.fullName.split(' ')
+    const lastName = lastNameParts.join(' ')
+
+    const updatedData = {
       firstName,
       lastName,
       username: user.username,
-      email: user.email,
-      profilePhoto: user.profilePhoto,
       gender: user.gender,
       dob: user.dob,
+      email: user.email,
       phone: user.phone,
       bio: user.bio,
       address: user.address,
@@ -311,22 +336,15 @@ async function saveProfile() {
       onCall: user.onCall,
       hours: user.hours,
       patientLoad: user.patientLoad
-    }, {
+    }
+
+    await axios.put(`/api/doctors/${doctorId}`, updatedData, {
       headers: { Authorization: `Bearer ${token}` }
-    });
+    })
 
-    console.log('✅ Profile saved successfully.');
+    console.log('Profile saved.')
   } catch (err) {
-    console.error('❌ Failed to save profile:', err);
-    alert('Error saving profile.');
-  }
-}
-
-function onImageChange(event) {
-  const file = event.target.files[0];
-  if (file) {
-    fileName.value = file.name;
-    user.profilePhoto = URL.createObjectURL(file);
+    console.error('Failed to save profile:', err)
   }
 }
 
