@@ -14,13 +14,12 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import Sidebar from '@/components/Sidebar.vue'
 import { userRole } from '@/stores/user.js'
+import axios from 'axios'
 
-import PatientTabs from '@/components/PatientTabs.vue'
 import gearSvg from '@/components/icons/gear.svg'
 import circleUserSvg from '@/components/icons/circleuser.svg'
 import fileSvg from '@/components/icons/file.svg'
@@ -29,6 +28,7 @@ import graphSvg from '@/components/icons/graph.svg'
 import homeSvg from '@/components/icons/home.svg'
 
 const route = useRoute()
+const router = useRouter()
 
 const hideSidebarRoutes = [
   '/login',
@@ -41,20 +41,61 @@ const hideSidebarRoutes = [
 
 const menuItems = [
   { svg: homeSvg, label: 'Home', route: '/dashboard', roles: ['doctor'] },
-  { svg: fileSvg, label: 'Records', route: '/records', roles: ['doctor'] },
+  { svg: fileSvg, label: 'Patients', route: '/patients', roles: ['doctor'] },
   { svg: fileSvg, label: 'Agendas', route: '/agendas', roles: ['receptionist'] },
   { svg: calendarSvg, label: 'Appointments', route: '/appointments', roles: ['doctor', 'receptionist'] },
   { svg: graphSvg, label: 'Reports', route: '/reports', roles: ['doctor'] },
   { svg: gearSvg, label: 'Settings', route: '/settings', roles: ['doctor', 'receptionist'] },
 ]
 
-const currentUser = {
-  svg: circleUserSvg,
+const currentUser = ref({
+  svg: 'https://bulma.io/images/placeholders/128x128.png',
   name: 'Jane Doe',
   route: '/profile'
-}
+})
 
-// Use the reactive userRole from the store
+const token = localStorage.getItem('token')
+
+onMounted(async () => {
+  if (!token) {
+    router.push('/login')
+    return
+  }
+
+  let decoded
+  try {
+    decoded = JSON.parse(atob(token.split('.')[1]))
+  } catch {
+    router.push('/login')
+    return
+  }
+
+  const { id, role } = decoded
+  if (!id || !role) {
+    router.push('/login')
+    return
+  }
+
+  try {
+    let res
+    if (role === 'doctor') {
+      res = await axios.get(`/api/doctors/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+    } else if (role === 'receptionist') {
+      res = await axios.get(`/api/receptionists/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+    } else {
+      router.push('/login')
+      return
+    }
+
+    const data = res.data
+
+    currentUser.value.name = `${data.firstName} ${data.lastName}`
+    currentUser.value.svg = data.profilePhoto || currentUser.value.svg
+  } catch (err) {
+    console.error('Failed to load profile:', err)
+  }
+})
+
 const filteredMenuItems = computed(() =>
   menuItems.filter(item => !item.roles || item.roles.includes(userRole.value))
 )
