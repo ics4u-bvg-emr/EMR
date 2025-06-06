@@ -90,8 +90,8 @@ async function fetchData() {
 
   try {
     const [patientsRes, recordsRes] = await Promise.all([
-      fetch('https://emr-backend-h03z.onrender.com/api/patients'),
-      fetch('https://emr-backend-h03z.onrender.com/api/medical-records'),
+      fetch('http://localhost:3000/api/patients'),
+      fetch('http://localhost:3000/api/medical-records'),
     ])
 
     if (!patientsRes.ok || !recordsRes.ok) {

@@ -64,41 +64,40 @@ router.get('/drugs/search/:query',async(req,res)=>{
     }
 })
 
-router.get('/drugs/interaction-check',async(req,res)=>{
-    try{
-        const {drug1,drug2}=req.body
-        if(!drug1||!drug2)
-            return res.status(500).json({error:'needs 2 drugs'})
+router.get('/drugs/interaction-check', async (req, res) => {
+    try {
+        const { drug1, drug2 } = req.query;
+        if (!drug1 || !drug2)
+        return res.status(400).json({ error: 'Needs 2 drug names' });
 
-        const interactions1=await mongoose.connection.db.collection('drugs').findOne({name:drug1},{
-            projection:
-                {
-                    _id:0,
-                    'drug-interactions':1
-                }
-        })
-        const interactions2=await mongoose.connection.db.collection('drugs').findOne({name:drug2},{
-            projection:
-                {
-                    _id:0,
-                    'drug-interactions':1
-                }
-        })
+        const collection = mongoose.connection.db.collection('drugs');
 
-        if(!interactions1||!interactions2)
-            return res.status(500).json({error:'drugs not found'})
-        
-        const interaction1=interactions1['drug-interactions'].find(interaction=>interaction.name==drug2);
-        const interaction2=interactions2['drug-interactions'].find(interaction=>interaction.name==drug1);
+        const [drugA, drugB] = await Promise.all([
+        collection.findOne({ name: drug1 }, { projection: { 'drug-interactions': 1 } }),
+        collection.findOne({ name: drug2 }, { projection: { 'drug-interactions': 1 } })
+        ]);
 
-        if(interaction1||interaction2){
-            // return res.status(200).json({interactions:[interaction1,interaction2]})
-            return res.status(200).json({interactions:interaction1.description})
-        }else
-            return res.status(200).json({interactions:null})
-    }catch(error){
-        res.status(500).json(error)
+        if (!drugA || !drugB)
+        return res.status(404).json({ error: 'One or both drugs not found' });
+
+        const listA = Array.isArray(drugA['drug-interactions']) ? drugA['drug-interactions'] : [];
+        const listB = Array.isArray(drugB['drug-interactions']) ? drugB['drug-interactions'] : [];
+
+        const interactionFromA = listA.find(d => d.name === drug2);
+        const interactionFromB = listB.find(d => d.name === drug1);
+
+        if (interactionFromA || interactionFromB) {
+        return res.status(200).json({
+            interactions: interactionFromA?.description || interactionFromB?.description || 'Interaction found'
+        });
+        }
+
+        return res.status(200).json({ interactions: null });
+    } catch (err) {
+        console.error('Drug interaction check failed:', err);
+        return res.status(500).json({ error: 'Server error', details: err.message });
     }
-})
+});
+
 
 export default router
