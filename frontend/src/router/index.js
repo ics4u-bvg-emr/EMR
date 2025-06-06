@@ -12,6 +12,9 @@ import ResetPassword from '@/views/ResetPassword.vue'
 import RequestPasswordReset from '@/views/RequestPasswordReset.vue'
 import Dashboard from '@/views/Home.vue'
 import RegisterDoctor from '@/views/RegisterDoctor.vue'
+import axios from 'axios'
+
+
 
 const routes = [
   { path: '/', redirect: '/login' },

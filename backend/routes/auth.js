@@ -169,6 +169,6 @@ router.get('/verify/:token', async (req, res) => {
       res.status(500).send('Something went wrong. Try again later.');
     }
   });
-  
- 
+
+
 export default router;

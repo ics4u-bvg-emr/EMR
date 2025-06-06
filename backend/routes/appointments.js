@@ -128,15 +128,18 @@ router.put('/appointments/:id', async (req, res) => {
 
 router.get('/appointments/my', requireAuth, async (req, res) => {
     try {
-        const doctorId = req.user._id;
+        const doctorId = req.user.id;
 
         const appointments = await Appointment.find({ doctorId })
-            .populate('patientId', 'firstName lastName phone') 
-            .exec();
+        .populate('patientId', 'firstName lastName phone')
+        .exec();
 
         res.status(200).json(appointments);
     } catch (error) {
-        res.status(500).json({ message: "Error fetching doctor's appointments", error: error.message });
+        res.status(500).json({
+        message: "Error fetching doctor's appointments",
+        error: error.message,
+        });
     }
 });
 

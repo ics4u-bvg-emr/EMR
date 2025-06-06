@@ -135,6 +135,7 @@ const todaysAppointments = computed(() => {
 
 onMounted(async () => {
   const token = localStorage.getItem('token')
+  console.log("Token:", token)
   const [apptRes, patientRes] = await Promise.all([
     axios.get('/api/appointments/my', { headers: { Authorization: `Bearer ${token}` } }),
     axios.get('/api/patients', { headers: { Authorization: `Bearer ${token}` } })

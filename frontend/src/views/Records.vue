@@ -66,7 +66,7 @@ const fetchPatients = async () => {
   loading.value = true
   error.value = null
   try {
-    const res = await fetch('https://emr-backend-h03z.onrender.com/api/patients')
+    const res = await fetch('http://localhost:3000/api/patients')
     if (!res.ok) throw new Error('Failed to fetch patient data')
     patients.value = await res.json()
   } catch (err) {

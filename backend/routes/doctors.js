@@ -1,6 +1,7 @@
 import express from 'express';
 import Doctor from '../models/Doctor.js';
 import mongoose from 'mongoose';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 const ObjectId = mongoose.Types.ObjectId;
@@ -77,5 +78,6 @@ router.delete('/doctors/:id', async (req, res) => {
         res.status(500).json({ message: 'Error deleting doctor', error: error.message });
     }
 });
+
 
 export default router;

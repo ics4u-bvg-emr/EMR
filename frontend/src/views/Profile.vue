@@ -1,12 +1,11 @@
 <template>
   <section class="profile-page section">
-    // general profile stuff now with editing support HUZZAH
     <div class="level">
       <div class="level-left">
         <h1 class="title">Profile</h1>
       </div>
       <div class="level-right">
-        <button class="button is-info" @click="isEditing = !isEditing">
+        <button class="button is-info" @click="handleEditToggle">
           {{ isEditing ? 'Save' : 'Edit Profile' }}
         </button>
       </div>
@@ -176,37 +175,123 @@
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
+import axios from 'axios';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
-
-
-// edit mode toggle
 const isEditing = ref(false);
-
-// placeholder user data until i know where tf doctor data is from sob emoji
+const fileName = ref('');
 const user = reactive({
-  fullName: 'Dr. Jane Doe',
-  username: 'janedoe123',
+  fullName: '',
+  username: '',
   profilePhoto: 'https://bulma.io/images/placeholders/128x128.png',
-  gender: 'Female',
-  dob: '1985-07-10',
-  email: 'jane.doe@example.com',
-  phone: '(555) 123-4567',
-  bio: 'Experienced pediatrician with a passion for child health.',
-  address: '123 Health St, Wellness City',
-  specialty: 'Pediatrics',
-  experience: 8,
-  certifications: 'Board Certified in Pediatrics',
-  onCall: true,
-  hours: 'Mon-Fri, 9am-5pm',
-  patientLoad: 15
+  gender: '',
+  dob: '',
+  email: '',
+  phone: '',
+  bio: '',
+  address: '',
+  specialty: '',
+  experience: 0,
+  certifications: '',
+  onCall: false,
+  hours: '',
+  patientLoad: 0
 });
 
-const fileName = ref('');
+const token = localStorage.getItem('token');
+const decoded = token ? JSON.parse(atob(token.split('.')[1])) : {};
+let doctorId = null;
 
-// handle profile photo change kinda...?
+onMounted(async () => {
+  const token = localStorage.getItem('token');
+  if (!token) {
+    router.push('/login');
+    return;
+  }
+
+  try {
+    const decoded = JSON.parse(atob(token.split('.')[1]));
+    doctorId = decoded.id;
+
+    if (!doctorId) {
+      throw new Error('Invalid token: no doctor ID');
+    }
+
+    const res = await axios.get(`/api/doctors/${doctorId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    const data = res.data;
+    Object.assign(user, {
+      fullName: `${data.firstName} ${data.lastName}`,
+      username: data.username,
+      profilePhoto: data.profilePhoto || user.profilePhoto,
+      gender: data.gender || '',
+      dob: data.dob ? data.dob.split('T')[0] : '',
+      email: data.email,
+      phone: data.phone || '',
+      bio: data.bio || '',
+      address: data.address || '',
+      specialty: data.specialization || '',
+      experience: data.experience || 0,
+      certifications: data.certifications || '',
+      onCall: data.onCall || false,
+      hours: data.hours || '',
+      patientLoad: data.patientLoad || 0
+    });
+  } catch (err) {
+    console.error('Failed to load doctor profile:', err);
+    router.push('/login');
+  }
+});
+
+
+function handleEditToggle() {
+  if (isEditing.value) {
+    saveProfile();
+  }
+  isEditing.value = !isEditing.value;
+}
+
+async function saveProfile() {
+  const [firstName, lastName = ''] = user.fullName.trim().split(' ');
+
+  try {
+    await axios.put(`/api/doctors/${doctorId}`, {
+      firstName,
+      lastName,
+      username: user.username,
+      email: user.email,
+      profilePhoto: user.profilePhoto,
+      gender: user.gender,
+      dob: user.dob,
+      phone: user.phone,
+      bio: user.bio,
+      address: user.address,
+      specialization: user.specialty,
+      experience: user.experience,
+      certifications: user.certifications,
+      onCall: user.onCall,
+      hours: user.hours,
+      patientLoad: user.patientLoad
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    console.log('✅ Profile saved successfully.');
+  } catch (err) {
+    console.error('❌ Failed to save profile:', err);
+    alert('Error saving profile.');
+  }
+}
+
+function logout() {
+  localStorage.removeItem('token');
+  router.push('/login');
+}
+
 function onImageChange(event) {
   const file = event.target.files[0];
   if (file) {
@@ -214,22 +299,126 @@ function onImageChange(event) {
     user.profilePhoto = URL.createObjectURL(file);
   }
 }
-
-function logout(){
-  localStorage.removeItem('token')
-  router.push('/login')
-}
 </script>
 
 <style scoped>
 .profile-page {
-  font-family: 'Geist Sans', sans-serif;
+  font-family: 'Inter', 'Geist Sans', sans-serif;
+  background-color: #f5f7fa;
+  padding-bottom: 2rem;
 }
+
+.title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1e1e1e;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: #6b7280;
+}
+
+.level {
+  margin-bottom: 2rem;
+}
+
 .box {
-  box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1);
+  border-radius: 1rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+  padding: 1.75rem;
+  background: white;
+  margin-bottom: 2rem;
+  transition: box-shadow 0.2s ease;
 }
-/* Additional spacing and font-size adjustments */
+
+.box:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.field {
+  margin-bottom: 1.5rem;
+}
+
+.label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.25rem;
+}
+
+.input,
+.textarea,
+.select select {
+  font-size: 0.95rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+}
+
+p.is-size-5 {
+  font-size: 0.95rem;
+  color: #4b5563;
+  margin-top: 0.25rem;
+}
+
+.image img {
+  border-radius: 50%;
+  border: 3px solid #00b89c;
+  object-fit: cover;
+  max-width: 128px;
+  max-height: 128px;
+}
+
+.file-label {
+  cursor: pointer;
+}
+
 .mt-4 {
   margin-top: 1rem;
 }
+
+.button.is-info {
+  font-size: 0.95rem;
+  padding: 0.6em 1.2em;
+  border-radius: 8px;
+  background-color: #3b82f6;
+  border: none;
+  color: white;
+  font-weight: 600;
+}
+
+.button.is-light {
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.router-link {
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+.router-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .box {
+    padding: 1.25rem;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .field {
+    margin-bottom: 1rem;
+  }
+}
 </style>
+
