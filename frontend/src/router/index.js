@@ -39,6 +39,7 @@ const routes = [
   { path: '/reports', name: 'Reports', component: Reports, meta: { requiresAuth: true, role: 'doctor' } },
   { path: '/profile', name: 'Profile', component: Profile, meta: { requiresAuth: true, role: ['doctor','receptionist'] } },
   { path: '/records/:id', name: 'PatientEdit', component: PatientEdit, meta: { requiresAuth: true, role: 'doctor' } },
+  {path: '/diagnosis/drafts', name: 'DiagnosisDrafts', component: DraftsList, meta: { requiresAuth: true, role: 'doctor' }}
 ]
 
 const router = createRouter({
