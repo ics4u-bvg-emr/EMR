@@ -65,7 +65,7 @@ const toISO = (dateStr) => {
 
 const fetchAppointments = async () => {
   try {
-    const res = await axios.get('http://localhost:3000/api/appointments');
+    const res = await axios.get('https://emr-backend-h03z.onrender.com/api/appointments');
     const validEvents = res.data
       .map((appt) => {
         const startISO = toISO(appt.start);

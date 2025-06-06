@@ -16,14 +16,14 @@
           </span>
         </div>
         <div class="draft-actions">
-          <button 
-            @click="continueDraft(draft.patientId?._id)" 
+          <button
+            @click="continueDraft(draft.patientId?._id)"
             class="btn-continue"
           >
             Continue Draft
           </button>
-          <button 
-            @click="deleteDraft(draft._id)" 
+          <button
+            @click="deleteDraft(draft._id)"
             class="btn-delete"
             v-if="draft._id"
           >
@@ -50,7 +50,7 @@ onMounted(async () => {
     loading.value = true
     try {
         // Replace with actual doctor ID from your auth system
-        const doctorId = '6838adf12a17b3053d853cf7' 
+        const doctorId = '6838adf12a17b3053d853cf7'
         await store.fetchDoctorDrafts(doctorId)
         drafts.value = store.draftDiagnoses || [] // Ensure it's always an array
     } catch (error) {
@@ -68,15 +68,15 @@ onMounted(async () => {
 //         params: { id: draft.patientId._id },
 //         query: { tab: 'Diagnose' }
 //     })
-    
+
 //     // Load the draft data into the store
 //     store.loadDraft(draft.patientId._id)
 // }
 
 const continueDraft = async (patientId) => {
-    if (!patientId) 
+    if (!patientId)
         return
-    
+
     try {
         await store.loadDraft(patientId)
         router.push({
@@ -90,10 +90,10 @@ const continueDraft = async (patientId) => {
 
 const deleteDraft = async (diagnosisId) => {
     if (!diagnosisId) return
-    
+
     if (confirm('Are you sure you want to delete this draft?')) {
         try {
-        await axios.delete(`http://localhost:3000/api/diagnosis/${diagnosisId}`)
+        await axios.delete(`https://emr-backend-h03z.onrender.com/api/diagnosis/${diagnosisId}`)
         drafts.value = drafts.value.filter(d => d._id !== diagnosisId)
         store.draftDiagnoses = store.draftDiagnoses.filter(d => d._id !== diagnosisId)
         } catch (error) {

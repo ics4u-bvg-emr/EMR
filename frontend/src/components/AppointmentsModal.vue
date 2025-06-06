@@ -72,7 +72,7 @@
         }
 
         try {
-            const res = await axios.post('http://localhost:3000/api/appointments', {
+            const res = await axios.post('https://emr-backend-h03z.onrender.com/api/appointments', {
                 doctorId: doctorId.value.trim(),
                 patientId: selectedPatient.value,
                 start: new Date(start.value).toISOString(),
@@ -113,7 +113,7 @@
 
     onMounted(async () => {
         try {
-            const res = await axios.get('http://localhost:3000/api/patients');
+            const res = await axios.get('https://emr-backend-h03z.onrender.com/api/patients');
             patients.value = res.data.map(p => ({
                 id: p._id,
                 name: `${p.firstName} ${p.lastName}`,

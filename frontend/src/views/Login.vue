@@ -59,8 +59,9 @@
   import { ref, onMounted } from 'vue';
   import { useRouter } from 'vue-router';
   import axios from 'axios';
+  import { setUserRole } from '@/stores/user.js'
 
-  axios.defaults.baseURL = 'http://localhost:3000'
+  axios.defaults.baseURL = 'https://emr-backend-h03z.onrender.com'
 
   const router = useRouter();
   const username = ref('');
@@ -91,9 +92,13 @@
       localStorage.setItem('role', role);
       localStorage.setItem('username', returnedUsername || username.value);
       localStorage.setItem('loginAttempts', '0');
+      setUserRole(role); // <-- Make sure this is before router.push
 
-      // 🚀 Redirect to dashboard regardless of role
-      router.push('/dashboard');
+      if (role === 'doctor') {
+        router.push('/dashboard');
+      } else if (role === 'receptionist') {
+        router.push('/appointments');
+      }
     } catch (err) {
       console.error('❌ Login failed:', err.response?.data || err.message);
 

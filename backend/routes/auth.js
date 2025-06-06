@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import Doctor from '../models/Doctor.js'; // ✅ Use Doctor model
+import Receptionist from '../models/Receptionist.js'; // Add this import
 import crypto from 'crypto';
 import { transporter } from '../utils/email.js';
 import dotenv from 'dotenv';
@@ -22,7 +23,12 @@ router.post('/login', async (req, res) => {
     return
   }
 
-  const user = await Doctor.findOne({ username });
+  // Try to find user in Doctor collection
+  let user = await Doctor.findOne({ username });
+  if (!user) {
+    // If not found, try Receptionist collection
+    user = await Receptionist.findOne({ username });
+  }
   if (!user) return res.status(401).json({ message: 'Invalid credentials' });
 
   const isMatch = await bcrypt.compare(password, user.password);
@@ -37,21 +43,23 @@ router.post('/login', async (req, res) => {
 
 // ✅ REGISTER Route (now includes full Doctor schema)
 router.post('/register', async (req, res) => {
-    const {
-      firstName,
-      lastName,
-      specialization,
-      username,
-      email,
-      password,
-      role = 'user',
-    } = req.body;
-  
-    try {
-      const hashed = await bcrypt.hash(password, 10);
-      const verificationToken = crypto.randomBytes(32).toString('hex');
-  
-      const doctor = new Doctor({
+  const {
+    firstName,
+    lastName,
+    specialization,
+    username,
+    email,
+    password,
+    role = 'user',
+  } = req.body;
+
+  try {
+    const hashed = await bcrypt.hash(password, 10);
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+
+    let user;
+    if (role === 'doctor') {
+      user = new Doctor({
         firstName,
         lastName,
         specialization,
@@ -62,29 +70,43 @@ router.post('/register', async (req, res) => {
         isVerified: false,
         verificationToken,
       });
-  
-      await doctor.save();
-  
-      const confirmLink = `https://emr-frontend-406r.onrender.com/verify-email/${verificationToken}`;
-  
-      await transporter.sendMail({
-        from: `"BVG Care" <${process.env.EMAIL_USER}>`,
-        to: doctor.email,
-        subject: 'Confirm Your Email',
-        html: `
-          <p>Hello Dr. ${firstName},</p>
-          <p>Thanks for registering. Please confirm your email:</p>
-          <a href="${confirmLink}">${confirmLink}</a>
-          <p>This link will expire in 1 hour.</p>
-        `,
+    } else if (role === 'receptionist') {
+      user = new Receptionist({
+        firstName,
+        lastName,
+        username,
+        email,
+        password: hashed,
+        role,
+        isVerified: false,
+        verificationToken,
       });
-  
-      res.status(201).json({ message: 'Doctor registered. Check your email to verify your account.' });
-    } catch (err) {
-      console.error('❌ Registration error:', err.message);
-      res.status(500).json({ error: err.message });
+    } else {
+      return res.status(400).json({ error: 'Invalid role' });
     }
-  });
+
+    await user.save();
+
+    // const confirmLink = `https://emr-frontend-406r.onrender.com/verify-email/${verificationToken}`;
+
+    // await transporter.sendMail({
+    //   from: `"BVG Care" <${process.env.EMAIL_USER}>`,
+    //   to: user.email,
+    //   subject: 'Confirm Your Email',
+    //   html: `
+    //     <p>Hello ${firstName},</p>
+    //     <p>Thanks for registering. Please confirm your email:</p>
+    //     <a href="${confirmLink}">${confirmLink}</a>
+    //     <p>This link will expire in 1 hour.</p>
+    //   `,
+    // });
+
+    res.status(201).json({ message: `${role.charAt(0).toUpperCase() + role.slice(1)} registered. Check your email to verify your account.` });
+  } catch (err) {
+    console.error('❌ Registration error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
   
  
 // ✅ PASSWORD RESET REQUEST

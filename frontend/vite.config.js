@@ -18,7 +18,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'https://emr-backend-h03z.onrender.com',
         changeOrigin: true,
         secure: false,
       }
