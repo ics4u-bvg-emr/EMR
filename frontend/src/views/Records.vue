@@ -53,8 +53,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 
 const patients = ref([])
 const searchQuery = ref('')
@@ -66,15 +67,24 @@ const fetchPatients = async () => {
   loading.value = true
   error.value = null
   try {
-    const res = await fetch('http://localhost:3000/api/patients')
-    if (!res.ok) throw new Error('Failed to fetch patient data')
-    patients.value = await res.json()
+    const response = await axios.get('http://localhost:3000/api/patients')
+    patients.value = response.data
   } catch (err) {
     error.value = 'Error loading patients: ' + err.message
   } finally {
     loading.value = false
   }
 }
+
+const debouncedSearch = ref('')
+const debounceTimeout = ref(null)
+
+watch(searchQuery, (newVal) => {
+  clearTimeout(debounceTimeout.value)
+  debounceTimeout.value = setTimeout(() => {
+    debouncedSearch.value = newVal
+  }, 300)
+})
 
 const filteredPatients = computed(() => {
   const query = searchQuery.value.trim().toLowerCase()

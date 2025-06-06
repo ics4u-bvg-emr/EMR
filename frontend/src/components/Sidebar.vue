@@ -26,6 +26,12 @@
         </li>
       </ul>
     </nav>
+    
+      <router-link to="/diagnosis/drafts" class="nav-link">
+        <span class="icon">📝</span>
+        <span>My Drafts</span>
+        <!-- <span v-if="draftCount > 0" class="badge">{{ draftCount }}</span> -->
+      </router-link>
     <div class="sidebar-footer">
       <router-link :to="user.route" class="user-link" active-class="is-active">
         <span class="icon footer-icon">

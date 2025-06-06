@@ -15,8 +15,10 @@
 
 <script setup>
 import { useRoute } from 'vue-router'
+import { ref } from 'vue'
 import Sidebar from '@/components/Sidebar.vue'
 
+import PatientTabs from '@/components/PatientTabs.vue'
 import gearSvg from '@/components/icons/gear.svg'
 import circleUserSvg from '@/components/icons/circleuser.svg'
 import fileSvg from '@/components/icons/file.svg'

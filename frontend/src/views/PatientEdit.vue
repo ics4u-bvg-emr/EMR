@@ -1,380 +1,342 @@
 <template>
-  <main class="patient-edit-screen" ref="pdfRef">
-    <div class="header-row">
-      <div class="avatar"></div>
-      <div>
-        <h2 class="patient-name">{{ patient.name }}</h2>
-        <div class="patient-meta">
-          {{ patient.gender }} &middot; {{ patient.age }} years ({{ patient.dob }})
+  <main class="patient-edit-screen">
+    <div v-if="loading" class="notification is-info">Loading patient data...</div>
+    <div v-else-if="error" class="notification is-danger">{{ error }}</div>
+    <div v-else>
+      <!-- Header -->
+      <div class="header-row">
+        <div class="avatar"></div>
+        <div>
+          <h2 class="patient-name">{{ patient.firstName }} {{ patient.lastName }}</h2>
+          <div class="patient-meta">
+            {{ patient.sex }} &middot; {{ age }} years ({{ formatDate(patient.dateOfBirth) }})
+          </div>
         </div>
-      </div>
-      <div class="header-actions">
-        <button class="btn-primary btn-save" @click="savePatient">Save</button>
-        <button class="btn-outline" @click="cancelEdit">Cancel</button>
-        <button class="btn-outline" @click="exportReferralPdf()">Download Referral</button>
-        <button class="btn-outline" @click="exportPrescriptionPdf()">Download Prescription</button>
-      </div>
-    </div>
-
-    <div class="tabs-row">
-      <button
-        v-for="tab in tabs"
-        :key="tab"
-        :class="['tab-btn', { active: currentTab === tab }]"
-        @click="currentTab = tab"
-      >
-        {{ tab }}
-      </button>
-    </div>
-
-    <section v-if="currentTab === 'Summary'" class="edit-grid" ref="pdfRef">
-      <!-- Diseases -->
-      <div class="edit-card">
-        <div class="card-header">
-          <span>Diseases</span>
-        </div>
-        <ul>
-          <li v-for="(disease, i) in patient.diseases" :key="i">
-            <input v-model="patient.diseases[i]" class="input" />
-            <button class="remove-btn" @click="removeDisease(i)">×</button>
-          </li>
-        </ul>
-        <button class="add-btn" @click="addDisease">+ Add Disease</button>
-      </div>
-
-      <!-- Vitals -->
-      <div class="edit-card">
-        <div class="card-header">
-          <span>Recent Vitals</span>
-        </div>
-        <div class="vitals-list">
-          <label>Height: <input v-model="patient.vitals.height" class="input" /></label>
-          <label>Weight: <input v-model="patient.vitals.weight" class="input" /></label>
-          <label>Temp: <input v-model="patient.vitals.temp" class="input" /></label>
-          <label>BMI: <input v-model="patient.vitals.bmi" class="input" /></label>
-          <label>BP: <input v-model="patient.vitals.bp" class="input" /></label>
-          <label>Pulse: <input v-model="patient.vitals.pulse" class="input" /></label>
-          <label>O2 Sat: <input v-model="patient.vitals.o2sat" class="input" /></label>
+        <div class="header-actions">
+          <button class="btn-primary" @click="savePatient">Save</button>
+          <button class="btn-outline" @click="cancelEdit">Cancel</button>
         </div>
       </div>
 
-      <!-- Allergies -->
-      <div class="edit-card">
-        <div class="card-header">
-          <span>Allergies</span>
-        </div>
-        <ul>
-          <li v-for="(allergy, i) in patient.allergies" :key="i">
-            <input v-model="patient.allergies[i]" class="input" />
-            <button class="remove-btn" @click="removeAllergy(i)">×</button>
-          </li>
-        </ul>
-        <button class="add-btn" @click="addAllergy">+ Add Allergy</button>
-      </div>
-
-      <!-- Medications -->
-      <div class="edit-card">
-        <div class="card-header">
-          <span>Medications</span>
-        </div>
-        <ul>
-          <li v-for="(med, i) in patient.medications" :key="i" class="med-row">
-            <input v-model="med.name" class="input" placeholder="Name" />
-            <input v-model="med.dose" class="input" placeholder="Dose" />
-            <button class="remove-btn" @click="removeMedication(i)">×</button>
-          </li>
-        </ul>
-        <button class="add-btn" @click="addMedication">+ Add Medication</button>
-      </div>
-
-      <!-- History -->
-      <div class="edit-card">
-        <div class="card-header">
-          <span>Other History</span>
-        </div>
-        <ul>
-          <li v-for="(event, i) in patient.history" :key="i">
-            <input v-model="patient.history[i]" class="input" />
-            <button class="remove-btn" @click="removeHistory(i)">×</button>
-          </li>
-        </ul>
-        <button class="add-btn" @click="addHistory">+ Add Event</button>
-      </div>
-
-      <!-- Encounters -->
-      <div class="edit-card">
-        <div class="card-header">
-          <span>Encounters</span>
-        </div>
-        <ul>
-          <li v-for="(enc, i) in patient.encounters" :key="i" class="enc-row">
-            <input v-model="enc.date" class="input" placeholder="Date" />
-            <input v-model="enc.status" class="input" placeholder="Status" />
-            <button class="remove-btn" @click="removeEncounter(i)">×</button>
-          </li>
-        </ul>
-        <button class="add-btn" @click="addEncounter">+ Add Encounter</button>
-      </div>
-    </section>
-
-    <section v-if="currentTab === 'Diagnose'">
-      <div class="horizontal-timeline">
-        <div
-          v-for="(step, idx) in diagnoseSteps"
-          :key="step.label"
-          class="timeline-step-horizontal"
+      <!-- Tabs -->
+      <div class="tabs-row">
+        <button
+          v-for="tab in tabs"
+          :key="tab"
+          :class="['tab-btn', { active: currentTab === tab }]"
+          @click="currentTab = tab"
         >
-          <div
-            class="timeline-circle-horizontal"
-            :class="{
-              active: currentStep === idx,
-              completed: idx < currentStep
-            }"
-          >
-            {{ idx + 1 }}
-          </div>
-          <div class="timeline-label" v-html="step.label.replace(/\n/g, '<br>')"></div>
-          <div v-if="currentStep === idx" class="timeline-step-indicator">Current Step</div>
-        </div>
+          {{ tab }}
+        </button>
       </div>
-      <div class="timeline-fields">
-        <!-- Step 1: Symptoms -->
-        <div v-if="currentStep === 0">
-          <h3>Symptoms</h3>
-          <div class="symptoms-list">
-            <label
-              v-for="symptom in commonSymptoms"
-              :key="symptom"
-              class="symptom-checkbox"
-            >
-              <input
-                type="checkbox"
-                :value="symptom"
-                v-model="diagnoseFields.symptoms"
-              />
-              {{ symptom }}
-            </label>
-            <label class="symptom-checkbox">
-              <input
-                type="checkbox"
-                value="Other"
-                v-model="diagnoseFields.symptoms"
-                @change="showOtherSymptom = !showOtherSymptom"
-              />
-              Other
-            </label>
-            <input
-              v-if="showOtherSymptom"
-              v-model="diagnoseFields.otherSymptom"
-              class="input"
-              placeholder="Describe other symptom"
-            />
-          </div>
-          <button
-            class="btn-primary"
-            :disabled="!canProceedSymptoms"
-            @click="nextStep"
-          >
-            Next
-          </button>
-        </div>
-        <!-- Step 2: Examination -->
-        <div v-else-if="currentStep === 1">
-          <h3>Examination</h3>
-          <div class="exam-section">
-            <div class="exam-group">
-              <div class="exam-title">General</div>
-              <div class="exam-row">
-                <div class="exam-field">
-                  <label>Temperature</label>
-                  <input v-model="diagnoseFields.examinationFields.temperature" type="text" placeholder="°C" />
-                </div>
-                <div class="exam-field">
-                  <label>Pulse rate</label>
-                  <input v-model="diagnoseFields.examinationFields.pulse" type="text" placeholder="bpm" />
-                </div>
-                <div class="exam-field">
-                  <label>Blood pressure</label>
-                  <input v-model="diagnoseFields.examinationFields.bp" type="text" placeholder="mmHg" />
-                </div>
-                <div class="exam-field">
-                  <label>Respiratory rate</label>
-                  <input v-model="diagnoseFields.examinationFields.resp" type="text" placeholder="bpm" />
-                </div>
-                <div class="exam-field">
-                  <label>SPO2</label>
-                  <input v-model="diagnoseFields.examinationFields.spo2" type="text" placeholder="%" />
-                </div>
+
+      <!-- Summary Tab -->
+      <section v-if="currentTab === 'Summary'" class="section" style="padding: 0; margin: 0;">
+        <div class="columns is-multiline is-variable is-5">
+
+          <!-- BASIC INFO -->
+          <div class="column is-half">
+            <div class="box">
+              <div class="level is-mobile">
+                <span class="title is-6">Basic Info</span>
+                <button class="button is-small is-light ml-auto" @click="editing.basic = !editing.basic">
+                  {{ editing.basic ? 'Done' : 'Edit' }}
+                </button>
               </div>
-              <div class="exam-row">
-                <div class="exam-field">
-                  <label>Weight</label>
-                  <input v-model="diagnoseFields.examinationFields.weight" type="text" placeholder="kg" />
-                </div>
-                <div class="exam-field">
-                  <label>Height</label>
-                  <input v-model="diagnoseFields.examinationFields.height" type="text" placeholder="cm" />
-                </div>
-                <div class="exam-field">
-                  <label>Waist circumference</label>
-                  <input v-model="diagnoseFields.examinationFields.waist" type="text" placeholder="cm" />
-                </div>
-                <div class="exam-field">
-                  <label>BMI</label>
-                  <input v-model="diagnoseFields.examinationFields.bmi" type="text" placeholder="" />
-                </div>
+              <div v-if="editing.basic">
+                <div class="field"><label class="label">Sex</label><input v-model="patient.sex" class="input" /></div>
+                <div class="field"><label class="label">Date of Birth</label><input v-model="patient.dateOfBirth" class="input" type="date" /></div>
+                <div class="field"><label class="label">Height (cm)</label><input v-model="patient.height" class="input" type="number" /></div>
+                <div class="field"><label class="label">Weight (kg)</label><input v-model="patient.weight" class="input" type="number" /></div>
               </div>
-            </div>
-            <div class="exam-group exam-accordion">
-              <div class="exam-accordion-title" @click="toggleExamAccordion('cholesterol')">
-                Cholestrol &amp; heart function
-              </div>
-              <div v-if="examAccordion.cholesterol" class="exam-accordion-content">
-                <div class="exam-row">
-                  <div class="exam-field">
-                    <label>LDL</label>
-                    <input v-model="diagnoseFields.examinationFields.ldl" type="text" placeholder="mg/dL" />
-                  </div>
-                  <div class="exam-field">
-                    <label>HDL</label>
-                    <input v-model="diagnoseFields.examinationFields.hdl" type="text" placeholder="mg/dL" />
-                  </div>
-                  <div class="exam-field">
-                    <label>Triglycerides</label>
-                    <input v-model="diagnoseFields.examinationFields.triglycerides" type="text" placeholder="mg/dL" />
-                  </div>
-                </div>
-              </div>
-              <div class="exam-accordion-title" @click="toggleExamAccordion('dipstick')">
-                Dipstick tests
-              </div>
-              <div v-if="examAccordion.dipstick" class="exam-accordion-content">
-                <div class="exam-row">
-                  <div class="exam-field">
-                    <label>Protein</label>
-                    <input v-model="diagnoseFields.examinationFields.protein" type="text" />
-                  </div>
-                  <div class="exam-field">
-                    <label>Glucose</label>
-                    <input v-model="diagnoseFields.examinationFields.dipstickGlucose" type="text" />
-                  </div>
-                  <div class="exam-field">
-                    <label>Blood</label>
-                    <input v-model="diagnoseFields.examinationFields.blood" type="text" />
-                  </div>
-                </div>
-              </div>
-              <div class="exam-accordion-title" @click="toggleExamAccordion('glucose')">
-                Glucose &amp; diabetes
-              </div>
-              <div v-if="examAccordion.glucose" class="exam-accordion-content">
-                <div class="exam-row">
-                  <div class="exam-field">
-                    <label>Fasting glucose</label>
-                    <input v-model="diagnoseFields.examinationFields.fastingGlucose" type="text" placeholder="mg/dL" />
-                  </div>
-                  <div class="exam-field">
-                    <label>HbA1c</label>
-                    <input v-model="diagnoseFields.examinationFields.hba1c" type="text" placeholder="%" />
-                  </div>
-                </div>
-              </div>
-              <div class="exam-accordion-title" @click="toggleExamAccordion('other')">
-                Other
-              </div>
-              <div v-if="examAccordion.other" class="exam-accordion-content">
-                <textarea v-model="diagnoseFields.examinationFields.other" class="timeline-textarea" placeholder="Other findings"></textarea>
+              <div v-else>
+                <p>Sex: {{ patient.sex }}</p>
+                <p>Date of Birth: {{ formatDate(patient.dateOfBirth) }}</p>
+                <p>Height: {{ patient.height }} cm</p>
+                <p>Weight: {{ patient.weight }} kg</p>
               </div>
             </div>
           </div>
-          <button
-            class="btn-primary"
-            :disabled="!canProceedExamination"
-            @click="nextStep"
-          >
-            Next
-          </button>
+
+          <!-- CONTACT INFO -->
+          <div class="column is-half">
+            <div class="box">
+              <div class="level is-mobile">
+                <span class="title is-6">Contact Info</span>
+                <button class="button is-small is-light ml-auto" @click="editing.contact = !editing.contact">
+                  {{ editing.contact ? 'Done' : 'Edit' }}
+                </button>
+              </div>
+              <div v-if="editing.contact">
+                <div class="field"><label class="label">Phone</label><input v-model="patient.contactInfo.phoneNumber" class="input" /></div>
+                <div class="field"><label class="label">Email</label><input v-model="patient.contactInfo.email" class="input" /></div>
+                <div class="field"><label class="label">Address</label><input v-model="patient.contactInfo.address" class="input" /></div>
+              </div>
+              <div v-else>
+                <p>Phone: {{ patient.contactInfo.phoneNumber }}</p>
+                <p>Email: {{ patient.contactInfo.email }}</p>
+                <p>Address: {{ patient.contactInfo.address }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ALLERGIES + UPCOMING APPT -->
+          <div class="column is-half">
+            <div class="box">
+              <div class="level is-mobile">
+                <span class="title is-6">Allergies</span>
+                <button class="button is-small is-light ml-auto" @click="editing.allergies = !editing.allergies">
+                  {{ editing.allergies ? 'Done' : 'Edit' }}
+                </button>
+              </div>
+              <div v-if="editing.allergies">
+                <ul>
+                  <li v-for="(item, i) in patient.allergies" :key="i" class="mb-2 is-flex is-align-items-center">
+                    <input v-model="patient.allergies[i]" class="input mr-2" />
+                    <button class="remove-btn" @click="patient.allergies.splice(i, 1)">x</button>
+                  </li>
+                </ul>
+                <button class="add-btn" @click="patient.allergies.push('')">+ Add Allergy</button>
+              </div>
+              <div v-else>
+                <p>{{ patient.allergies.join(', ') || 'None' }}</p>
+              </div>
+            </div>
+
+            <!-- PAST APPTS -->
+            <div class="box mt-4">
+              <p class="title is-6 clickable" @click="togglePastAppointments">
+                Past Appointments
+                <span v-if="showPastAppointments">▲</span>
+                <span v-else>▼</span>
+              </p>
+              <ul v-show="showPastAppointments">
+                <li v-for="appt in pastAppointments" :key="appt._id" class="mb-3">
+                  <p><strong>{{ formatDateTime(appt.start) }}</strong></p>
+                  <p>Notes: {{ appt.notes || 'N/A' }}</p>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- MEDICAL HISTORY + PAST APPTS -->
+          <div class="column is-half">
+            <div class="box">
+              <div class="level is-mobile">
+                <span class="title is-6">Medical History</span>
+                <button class="button is-small is-light ml-auto" @click="editing.medicalHistory = !editing.medicalHistory">
+                  {{ editing.medicalHistory ? 'Done' : 'Edit' }}
+                </button>
+              </div>
+              <div v-if="editing.medicalHistory">
+                <label class="label">Past Conditions</label>
+                <ul>
+                  <li v-for="(item, i) in patient.medicalHistory.pastConditions" :key="i" class="mb-2 is-flex">
+                    <input v-model="patient.medicalHistory.pastConditions[i]" class="input mr-2" />
+                    <button class="remove-btn" @click="patient.medicalHistory.pastConditions.splice(i, 1)">x</button>
+                  </li>
+                </ul>
+                <button class="add-btn" @click="patient.medicalHistory.pastConditions.push('')">+ Add Condition</button>
+
+                <label class="label">Current Prescriptions</label>
+                <ul>
+                  <li v-for="(item, i) in patient.medicalHistory.currentPrescriptions" :key="i" class="mb-2 is-flex">
+                    <input v-model="patient.medicalHistory.currentPrescriptions[i]" class="input mr-2" />
+                    <button class="remove-btn" @click="patient.medicalHistory.currentPrescriptions.splice(i, 1)">x</button>
+                  </li>
+                </ul>
+                <button class="add-btn" @click="patient.medicalHistory.currentPrescriptions.push('')">+ Add Presciption</button>
+
+                <label class="label">Family History</label>
+                <ul>
+                  <li v-for="(item, i) in patient.medicalHistory.familyHistory" :key="i" class="mb-2 is-flex">
+                    <input v-model="patient.medicalHistory.familyHistory[i]" class="input mr-2" />
+                    <button class="remove-btn" @click="patient.medicalHistory.familyHistory.splice(i, 1)">x</button>
+                  </li>
+                </ul>
+                <button class="add-btn" @click="patient.medicalHistory.familyHistory.push('')">+ Add Family History</button>
+
+                <label class="label">Notes</label>
+                <textarea v-model="patient.medicalHistory.notes" class="textarea"></textarea>
+              </div>
+              <div v-else>
+                <p><strong>Past Conditions:</strong> {{ patient.medicalHistory.pastConditions.join(', ') || 'None' }}</p>
+                <p><strong>Current Prescriptions:</strong> {{ patient.medicalHistory.currentPrescriptions.join(', ') || 'None' }}</p>
+                <p><strong>Family History:</strong> {{ patient.medicalHistory.familyHistory.join(', ') || 'None' }}</p>
+                <p><strong>Notes:</strong> {{ patient.medicalHistory.notes || 'None' }}</p>
+              </div>
+            </div>
+            <!-- UPCOMING APPT -->
+            <div class="box mt-4">
+              <p class="title is-6">Upcoming Appointment</p>
+              <div v-if="upcomingAppointment">
+                <p><strong>{{ formatDateTime(upcomingAppointment.start) }}</strong></p>
+                <p>{{ upcomingAppointment.reason }}</p>
+                <p>Status: {{ upcomingAppointment.status }}</p>
+              </div>
+              <div v-else>
+                <p>No upcoming appointments.</p>
+              </div>
+            </div>
+          </div>
         </div>
-        <!-- Step 3: Diagnose & Prescribe -->
-        <div v-else-if="currentStep === 2">
-          <h3>Diagnose &amp; Prescribe</h3>
-          <textarea
-            v-model="diagnoseFields.diagnosis"
-            class="timeline-textarea"
-            placeholder="Enter diagnosis"
-          ></textarea>
-          <textarea
-            v-model="diagnoseFields.prescription"
-            class="timeline-textarea"
-            placeholder="Enter prescriptions"
-          ></textarea>
-          <button
-            class="btn-primary"
-            :disabled="!diagnoseFields.diagnosis.trim() || !diagnoseFields.prescription.trim()"
-            @click="nextStep"
-          >
-            Next
-          </button>
-        </div>
-        <!-- Step 4: Plan -->
-        <div v-else-if="currentStep === 3">
-          <h3>Plan</h3>
-          <textarea
-            v-model="diagnoseFields.plan"
-            class="timeline-textarea"
-            placeholder="Outline the treatment plan"
-          ></textarea>
-          <button
-            class="btn-primary"
-            :disabled="!diagnoseFields.plan.trim()"
-            @click="finishDiagnose"
-          >
-            Finish
-          </button>
-        </div>
-      </div>
-    </section>
+      </section>
+
+      <!-- Diagnose Tab -->
+      <section v-if="currentTab === 'Diagnose'">
+        <DiagnosisFlow />
+      </section>
+    </div>
   </main>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import DiagnosisFlow from '@/components/PatientDiagnosis/DiagnosisFlow.vue'
+import { ref, computed, onMounted, watch} from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
-import axios from 'axios'
+import axios from 'axios';
+import dayjs from 'dayjs';
 
 const router = useRouter()
+const route = useRoute()
+const patientId = route.params.id; 
+
 const pdfInput = ref()
 const tabs = ref(['Summary', 'Diagnose'])
 const currentTab = ref('Summary')
 
+const appointments = ref([]);
+const showPastAppointments = ref(true);
+const loading = ref(false)
+const error = ref(null)
+
 const patient = ref({
-  name: 'Jessica Rose',
-  gender: 'Female',
-  age: 36,
-  dob: '07.02.1987',
-  diseases: ['Meningitis', 'Migraines', 'Asthma'],
-  vitals: {
-    height: '68 in',
-    weight: '157 lbs',
-    temp: '98.6 F oral',
-    bmi: '28.4',
-    bp: '126/79',
-    pulse: '73',
-    o2sat: '98% RA'
+  firstName: '',
+  lastName: '',
+  sex: '',
+  dateOfBirth: '',
+  height: 0,
+  weight: 0,
+  contactInfo: {
+    phoneNumber: '',
+    email: '',
+    address: '',
   },
-  allergies: ['Penicillin'],
-  medications: [
-    { name: 'Flexeril', dose: '5gm oral tablet' },
-    { name: 'Lisinopril', dose: '500mg oral tablet' },
-    { name: 'Naproxen', dose: '500mg 2x day' }
-  ],
-  history: ['Appendectomy'],
-  encounters: [
-    { date: 'Feb 16, 2023', status: 'Scheduled' },
-    { date: 'Sep 27, 2023', status: 'Not recorded' }
-  ]
+  allergies: [],
+  medicalHistory: {
+    pastConditions: [],
+    currentPrescriptions: [],
+    familyHistory: [],
+    notes: '',
+  },
+});
+
+// Track which sections are in edit mode
+const editing = ref({
+  medicalHistory: false,
+  allergies: false
+});
+
+// Calculate age from DOB
+const age = computed(() => {
+  if (!patient.value.dateOfBirth) return 0
+  const birthDate = new Date(patient.value.dateOfBirth)
+  const ageDifMs = Date.now() - birthDate.getTime()
+  const ageDate = new Date(ageDifMs)
+  return Math.abs(ageDate.getUTCFullYear() - 1970)
+})
+
+// Fetch patient data
+const fetchPatient = async () => {
+  loading.value = true
+  error.value = null
+  try {
+    const response = await axios.get(`http://localhost:3000/api/patients/${patientId}`)
+    patient.value = response.data
+  } catch (err) {
+    error.value = 'Error loading patient: ' + err.message
+  } finally {
+    loading.value = false
+  }
+}
+
+const fetchAppointments = async () => {
+  loading.value = true
+  error.value = null
+  try {
+    const { data } = await axios.get(`http://localhost:3000/api/appointments?patientId=${patientId}`);
+    appointments.value = data;
+  } catch (err) {
+    error.value = 'Error loading appointments: ' + err.message
+  } finally {
+    loading.value = false
+  }
+};
+
+// Save patient data
+const savePatient = async () => {
+  try {
+    if (patientId) {
+      await axios.put(`http://localhost:3000/api/patients/${patientId}`, patient.value)
+    } else {
+      const response = await axios.post('http://localhost:3000/api/patients', patient.value)
+      router.push(`/patients/${response.data._id}`)
+    }
+    alert('Patient saved successfully!')
+  } catch (error) {
+    console.error('Error saving patient:', error)
+    alert('Failed to save patient')
+  }
+}
+
+// Load patient data when component mounts
+onMounted(async () => {
+  fetchPatient(), fetchAppointments();
+  loading.value = false;
+});
+
+// Date formatting helpers
+const formatDate = (dateStr) => {
+  return dayjs(dateStr).format('MMM D, YYYY');
+};
+
+const formatDateTime = (datetimeStr) => {
+  return dayjs(datetimeStr).format('MMM D, YYYY h:mm A');
+};
+
+// Sorted appointments
+const sortedAppointments = computed(() => {
+  return [...appointments.value].sort((a, b) => new Date(a.start) - new Date(b.start));
+});
+
+const upcomingAppointment = computed(() => {
+  const now = new Date();
+  return sortedAppointments.value.find(appt => new Date(appt.start) > now);
+});
+
+const pastAppointments = computed(() => {
+  const now = new Date();
+  return sortedAppointments.value
+    .filter(appt => new Date(appt.start) <= now)
+    .sort((a, b) => new Date(b.start) - new Date(a.start));
+});
+
+
+// Cancel edit
+const cancelEdit = () => {
+  editing.value = {
+    medicalHistory: false,
+    allergies: false
+  };
+  fetchPatient(); // reload from server
+};
+
+watch(() => route.query.tab, (newTab) => {
+  if (newTab) {
+    currentTab.value = newTab
+  }
 })
 
 const doctor = { //fits backend schema btw
@@ -530,135 +492,22 @@ function exportPrescriptionPdf() {
 
   doc.save(`${patient.value.name.replace(/\s/g, '_')}_Prescription.pdf`)
 }
-
-function addDisease() {
-  patient.value.diseases.push('')
-}
-function removeDisease(i) {
-  patient.value.diseases.splice(i, 1)
-}
-function addAllergy() {
-  patient.value.allergies.push('')
-}
-function removeAllergy(i) {
-  patient.value.allergies.splice(i, 1)
-}
-function addMedication() {
-  patient.value.medications.push({ name: '', dose: '' })
-}
-function removeMedication(i) {
-  patient.value.medications.splice(i, 1)
-}
-function addHistory() {
-  patient.value.history.push('')
-}
-function removeHistory(i) {
-  patient.value.history.splice(i, 1)
-}
-function addEncounter() {
-  patient.value.encounters.push({ date: '', status: '' })
-}
-function removeEncounter(i) {
-  patient.value.encounters.splice(i, 1)
-}
-function savePatient() {
-  // Save logic here (API call, etc)
-  alert('Patient saved!')
-}
-function cancelEdit() {
-  router.back()
-}
-
-const diagnoseSteps = [
-  { label: 'SYMPTOMS' },
-  { label: 'EXAMINE' },
-  { label: 'DIAGNOSE' },
-  { label: 'PLAN' }
-]
-const currentStep = ref(0)
-const showOtherSymptom = ref(false)
-const diagnoseFields = ref({
-  symptoms: [],
-  otherSymptom: '',
-  examinationFields: {
-    temperature: '',
-    pulse: '',
-    bp: '',
-    resp: '',
-    spo2: '',
-    weight: '',
-    height: '',
-    waist: '',
-    bmi: '',
-    ldl: '',
-    hdl: '',
-    triglycerides: '',
-    protein: '',
-    dipstickGlucose: '',
-    blood: '',
-    fastingGlucose: '',
-    hba1c: '',
-    other: ''
-  },
-  diagnosis: '',
-  prescription: '',
-  plan: ''
-})
-
-const examAccordion = ref({
-  cholesterol: false,
-  dipstick: false,
-  glucose: false,
-  other: false
-})
-
-function toggleExamAccordion(section) {
-  examAccordion.value[section] = !examAccordion.value[section]
-}
-
-const commonSymptoms = [
-  'Fever', 'Cough', 'Headache', 'Fatigue', 'Nausea', 'Vomiting', 'Diarrhea', 'Shortness of breath', 'Chest pain', 'Abdominal pain',
-  'Back pain', 'Joint pain', 'Muscle pain', 'Sore throat', 'Runny nose', 'Sneezing', 'Rash', 'Dizziness', 'Palpitations', 'Swelling',
-  'Weight loss', 'Weight gain', 'Night sweats', 'Chills', 'Loss of appetite', 'Blurred vision', 'Hearing loss', 'Ear pain', 'Nasal congestion', 'Itching',
-  'Burning sensation', 'Frequent urination', 'Painful urination', 'Blood in urine', 'Constipation', 'Heartburn', 'Indigestion', 'Loss of taste', 'Loss of smell', 'Difficulty swallowing',
-  'Hoarseness', 'Cramps', 'Tingling', 'Numbness', 'Memory loss', 'Confusion', 'Anxiety', 'Depression', 'Insomnia', 'Bruising'
-]
-
-const canProceedSymptoms = computed(() => {
-  return (
-    diagnoseFields.value.symptoms.length > 0 &&
-    (!diagnoseFields.value.symptoms.includes('Other') || diagnoseFields.value.otherSymptom.trim())
-  )
-})
-
-const canProceedExamination = computed(() => {
-  // At least one field filled in general section
-  const fields = diagnoseFields.value.examinationFields
-  return (
-    fields.temperature ||
-    fields.pulse ||
-    fields.bp ||
-    fields.resp ||
-    fields.spo2 ||
-    fields.weight ||
-    fields.height ||
-    fields.waist ||
-    fields.bmi
-  )
-})
-
-function nextStep() {
-  if (currentStep.value < diagnoseSteps.length - 1) {
-    currentStep.value++
-  }
-}
-function finishDiagnose() {
-  // Finalize logic here
-  alert('Diagnosis completed!')
-}
 </script>
 
 <style scoped>
+.notification {
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+.notification.is-info {
+  background-color: #e7f5ff;
+  color: #1862ab;
+}
+.notification.is-danger {
+  background-color: #fff5f5;
+  color: #c92a2a;
+}
 .patient-edit-screen {
   font-family: 'Geist Sans', sans-serif;
   min-height: 100vh;
@@ -801,6 +650,7 @@ function finishDiagnose() {
   border-radius: 6px;
   padding: 0.4rem 1rem;
   margin-top: 0.5rem;
+  margin-bottom: 1rem;
   cursor: pointer;
   font-size: 0.97em;
   align-self: flex-start;
@@ -819,7 +669,7 @@ function finishDiagnose() {
   border-radius: 50%;
   width: 32px;
   height: 32px;
-  font-size: 1.2rem;
+  font-size: 1rem;
   cursor: pointer;
   margin-left: 0.3rem;
   display: flex;
@@ -1118,5 +968,39 @@ function finishDiagnose() {
 .btn-primary:disabled {
   background: #bdbdbd;
   cursor: not-allowed;
+}
+
+.edit-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.box {
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.card-header {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.edit-card {
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.card-content {
+  padding: 1rem;
+}
+
+.ml-auto {
+  margin-left: auto;
+}
+.clickable {
+  cursor: pointer;
+  user-select: none;
 }
 </style>
