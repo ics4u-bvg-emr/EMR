@@ -1,14 +1,22 @@
 <template>
-  <div class="layout">
-    <Sidebar :items="menuItems" :user="currentUser" />
-    <div class="content-area">
-      <router-view />
+  <v-app>
+    <div class="layout">
+      <Sidebar
+        v-if="!hideSidebarRoutes.includes(route.path)"
+        :items="menuItems"
+        :user="currentUser"
+      />
+      <div class="content-area" :class="{ 'full-width': hideSidebarRoutes.includes(route.path) }">
+        <router-view />
+      </div>
     </div>
-  </div>
+  </v-app>
 </template>
 
-<script>
+<script setup>
+import { useRoute } from 'vue-router'
 import Sidebar from '@/components/Sidebar.vue'
+
 import gearSvg from '@/components/icons/gear.svg'
 import circleUserSvg from '@/components/icons/circleuser.svg'
 import fileSvg from '@/components/icons/file.svg'
@@ -16,26 +24,30 @@ import calendarSvg from '@/components/icons/calendar.svg'
 import graphSvg from '@/components/icons/graph.svg'
 import homeSvg from '@/components/icons/home.svg'
 
-export default {
-  name: 'App',
-  components: { Sidebar },
-  data() {
-    return {
-      menuItems: [
-        { svg: homeSvg, label: 'Home', route: '/' },
-        { svg: fileSvg, label: 'Records', route: '/records' },
-        { svg: fileSvg, label: 'Agendas', route: '/agendas' },
-        { svg: calendarSvg, label: 'Appointments', route: '/appointments' },
-        { svg: graphSvg, label: 'Reports', route: '/reports' },
-        { svg: gearSvg, label: 'Settings', route: '/settings' },
-      ],
-      currentUser: {
-        svg: circleUserSvg,
-        name: 'Jane Doe',
-        route: '/profile'
-      }
-    }
-  }
+const route = useRoute()
+
+const hideSidebarRoutes = [
+  '/login',
+  '/register',
+  '/register-doctor',
+  '/register-user',
+  '/reset-password',
+  '/request-password-reset'
+]
+
+const menuItems = [
+  { svg: homeSvg, label: 'Home', route: '/dashboard' },
+  { svg: fileSvg, label: 'Records', route: '/records' },
+  { svg: fileSvg, label: 'Agendas', route: '/agendas' },
+  { svg: calendarSvg, label: 'Appointments', route: '/appointments' },
+  { svg: graphSvg, label: 'Reports', route: '/reports' },
+  { svg: gearSvg, label: 'Settings', route: '/settings' },
+]
+
+const currentUser = {
+  svg: circleUserSvg,
+  name: 'Jane Doe',
+  route: '/profile'
 }
 </script>
 
@@ -53,6 +65,5 @@ export default {
   font-family: 'Geist Sans', sans-serif;
   overflow-y: auto;
   min-width: 0;
-  
 }
 </style>
