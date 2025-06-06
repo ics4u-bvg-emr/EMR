@@ -1,16 +1,14 @@
 <template>
-  <v-app>
-    <div class="layout">
-      <Sidebar
-        v-if="!hideSidebarRoutes.includes(route.path)"
-        :items="filteredMenuItems"
-        :user="currentUser"
-      />
-      <div class="content-area" :class="{ 'full-width': hideSidebarRoutes.includes(route.path) }">
-        <router-view />
-      </div>
+  <div class="layout">
+    <Sidebar
+      v-if="!hideSidebarRoutes.includes(route.path)"
+      :items="filteredMenuItems"
+      :user="currentUser"
+    />
+    <div class="content-area" :class="{ 'full-width': hideSidebarRoutes.includes(route.path) }">
+      <router-view />
     </div>
-  </v-app>
+  </div>
 </template>
 
 <script setup>
