@@ -5,12 +5,14 @@ import medicalRecordRoutes from './medical-records.js';
 import drugRoutes from './drugs.js'
 import prescriptionRoutes from './prescriptions.js';
 import doctorRoutes from './doctors.js'
+import diagnosisRoutes from './diagnosis.js'
 
 const router = express.Router();
 
 // Prefix all routes with '/api'
 router.use('/', appointmentRoutes);
 router.use('/', patientRoutes);
+router.use('/', diagnosisRoutes);
 router.use('/', medicalRecordRoutes);
 router.use('/', drugRoutes)
 router.use('/', prescriptionRoutes);
