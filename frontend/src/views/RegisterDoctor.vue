@@ -140,7 +140,7 @@
   const submit = async () => {
     loading.value = true
     try {
-      await axios.post('https://emr-backend-h03z.onrender.com/api/auth/register', {
+      await axios.post('http://localhost:3000/api/auth/register', {
         ...form.value,
         role: 'doctor',
       })

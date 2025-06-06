@@ -93,7 +93,7 @@ const deleteDraft = async (diagnosisId) => {
 
     if (confirm('Are you sure you want to delete this draft?')) {
         try {
-        await axios.delete(`https://emr-backend-h03z.onrender.com/api/diagnosis/${diagnosisId}`)
+        await axios.delete(`http://localhost:3000/api/diagnosis/${diagnosisId}`)
         drafts.value = drafts.value.filter(d => d._id !== diagnosisId)
         store.draftDiagnoses = store.draftDiagnoses.filter(d => d._id !== diagnosisId)
         } catch (error) {

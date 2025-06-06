@@ -67,7 +67,7 @@ const fetchPatients = async () => {
   loading.value = true
   error.value = null
   try {
-    const response = await axios.get('https://emr-backend-h03z.onrender.com/api/patients')
+    const response = await axios.get('http://localhost:3000/api/patients')
     patients.value = response.data
   } catch (err) {
     error.value = 'Error loading patients: ' + err.message

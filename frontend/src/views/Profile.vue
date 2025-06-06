@@ -272,11 +272,9 @@ onMounted(async () => {
       return;
     }
   } catch (err) {
-    // Only redirect if unauthorized (token expired/invalid)
     if (err.response && err.response.status === 401) {
       router.push('/login');
     } else {
-      // Optionally show an error message for other errors
       console.error('Failed to load profile:', err);
     }
   }
