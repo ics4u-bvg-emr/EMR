@@ -33,7 +33,7 @@
             </div>
             <h2 class="title is-4 mt-4">{{ user.fullName }}</h2>
             <p class="subtitle is-6">@{{ user.username }}</p>
-            <button class="button is-light mt-4">Log out</button>
+            <button @click="logout" class="button is-light mt-4">Log out</button>
           </div>
         </div>
 
@@ -177,6 +177,10 @@
 
 <script setup>
 import { ref, reactive } from 'vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+
 
 // edit mode toggle
 const isEditing = ref(false);
@@ -185,7 +189,7 @@ const isEditing = ref(false);
 const user = reactive({
   fullName: 'Dr. Jane Doe',
   username: 'janedoe123',
-  profilePhoto: 'https://bulma.io/images/placeholders/128x128.png', 
+  profilePhoto: 'https://bulma.io/images/placeholders/128x128.png',
   gender: 'Female',
   dob: '1985-07-10',
   email: 'jane.doe@example.com',
@@ -209,6 +213,11 @@ function onImageChange(event) {
     fileName.value = file.name;
     user.profilePhoto = URL.createObjectURL(file);
   }
+}
+
+function logout(){
+  localStorage.removeItem('token')
+  router.push('/login')
 }
 </script>
 
