@@ -50,7 +50,7 @@ const routes = [
   { path: '/patients', name: 'Patients', component: Patients, meta: { requiresAuth: true, role: 'doctor' } },
   { path: '/agendas', name: 'Agendas', component: Agendas, meta: { requiresAuth: true, role: 'receptionist' } },
   { path: '/appointments', name: 'Appointments', component: Appointments, meta: { requiresAuth: true, role: ['doctor','receptionist'] } },
-  { path: '/records', name: 'Records', component: Records, meta: { requiresAuth: true, role: 'doctor' } },
+  { path: '/patients', name: 'Patients', component: Patients, meta: { requiresAuth: true, role: 'doctor' } },
   { path: '/reports', name: 'Reports', component: Reports, meta: { requiresAuth: true, role: 'doctor' } },
   { path: '/profile', name: 'Profile', component: Profile, meta: { requiresAuth: true, role: ['doctor','receptionist'] } },
   { path: '/patients/:id', name: 'PatientEdit', component: PatientEdit, meta: { requiresAuth: true, role: 'doctor' } },
