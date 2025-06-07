@@ -265,7 +265,13 @@ const fetchPatient = async () => {
   patient.value = { ...defaultPatient }
   const myToken = ++fetchToken
   try {
-    const response = await axios.get(`https://emr-backend-h03z.onrender.com/api/patients/${patientId.value}`)
+    const token = localStorage.getItem('token')
+    const response = await axios.get(
+      `https://emr-backend-h03z.onrender.com/api/patients/${patientId.value}`,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    )
     // Only update if this is the latest fetch
     if (myToken === fetchToken) {
       patient.value = { ...defaultPatient, ...response.data }
@@ -285,7 +291,13 @@ const fetchAppointments = async () => {
   loading.value = true
   error.value = null
   try {
-    const { data } = await axios.get(`https://emr-backend-h03z.onrender.com/api/appointments?patientId=${patientId.value}`)
+    const token = localStorage.getItem('token')
+    const { data } = await axios.get(
+      `https://emr-backend-h03z.onrender.com/api/appointments?patientId=${patientId.value}`,
+      {
+        headers: { Authorization: `Bearer ${token}` }
+      }
+    )
     appointments.value = data
   } catch (err) {
     error.value = 'Error loading appointments: ' + err.message
