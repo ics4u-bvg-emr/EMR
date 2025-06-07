@@ -38,7 +38,7 @@
             v-for="patient in filteredPatients"
             :key="patient._id"
             class="clickable-row"
-            @click="goToPatient(patient._id)"
+            @click="openPatientTab(patient)"
           >
             <td>{{ patient.firstName }} {{ patient.lastName }}</td>
             <td>{{ calculateAge(patient.dateOfBirth) }}</td>
@@ -56,12 +56,14 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { useTabsStore } from '@/stores/tabs'
 
 const patients = ref([])
 const searchQuery = ref('')
 const loading = ref(true)
 const error = ref(null)
 const router = useRouter()
+const tabsStore = useTabsStore()
 
 const fetchPatients = async () => {
   loading.value = true
@@ -102,8 +104,14 @@ function calculateAge(dateString) {
   return Math.abs(ageDate.getUTCFullYear() - 1970)
 }
 
-function goToPatient(patientId) {
-  router.push({ name: 'PatientEdit', params: { id: patientId } })
+function openPatientTab(patient) {
+  tabsStore.openTab({
+    key: `patient-${patient._id}`,
+    title: `${patient.firstName} ${patient.lastName}`,
+    route: { name: 'PatientEdit', params: { id: patient._id } },
+    closeable: true
+  })
+  router.push({ name: 'PatientEdit', params: { id: patient._id } })
 }
 
 onMounted(fetchPatients)

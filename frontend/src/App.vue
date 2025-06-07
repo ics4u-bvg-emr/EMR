@@ -1,21 +1,23 @@
 <template>
-  <div class="layout">
-    <Sidebar
-      v-if="!hideSidebarRoutes.includes(route.path)"
-      :items="filteredMenuItems"
-      :user="currentUser"
-    />
-    <div class="content-area" :class="{ 'full-width': hideSidebarRoutes.includes(route.path) }">
-      <router-view />
+  <div v-if="isPublicRoute">
+    <router-view />
+  </div>
+  <div v-else class="app-layout">
+    <Sidebar :items="filteredSidebarItems" :user="user" />
+    <div class="main-content">
+      <TabBar />
+      <router-view :key="activeTab?.key" />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Sidebar from '@/components/Sidebar.vue'
+import TabBar from '@/components/TabBar.vue'
 import { userRole } from '@/stores/user.js'
+import { useTabsStore } from '@/stores/tabs'
 import axios from 'axios'
 
 import gearSvg from '@/components/icons/gear.svg'
@@ -27,17 +29,9 @@ import homeSvg from '@/components/icons/home.svg'
 
 const route = useRoute()
 const router = useRouter()
+const tabsStore = useTabsStore()
 
-const hideSidebarRoutes = [
-  '/login',
-  '/register',
-  '/register-doctor',
-  '/register-user',
-  '/reset-password',
-  '/request-password-reset'
-]
-
-const menuItems = [
+const sidebarItems = [
   { svg: homeSvg, label: 'Home', route: '/dashboard', roles: ['doctor'] },
   { svg: fileSvg, label: 'Patients', route: '/patients', roles: ['doctor'] },
   { svg: fileSvg, label: 'Agendas', route: '/agendas', roles: ['receptionist'] },
@@ -46,66 +40,43 @@ const menuItems = [
   { svg: gearSvg, label: 'Settings', route: '/settings', roles: ['doctor', 'receptionist'] },
 ]
 
-const currentUser = ref({
+const user = ref({
   svg: 'https://bulma.io/images/placeholders/128x128.png',
   name: 'Jane Doe',
-  route: '/profile'
+  route: '/profile',
+  get role() { return userRole.value } // <-- Make role reactive!
 })
 
-const token = localStorage.getItem('token')
-
-onMounted(async () => {
-  if (!token) {
-    router.push('/login')
-    return
-  }
-
-  let decoded
-  try {
-    decoded = JSON.parse(atob(token.split('.')[1]))
-  } catch {
-    router.push('/login')
-    return
-  }
-
-  const { id, role } = decoded
-  if (!id || !role) {
-    router.push('/login')
-    return
-  }
-
-  try {
-    let res
-    if (role === 'doctor') {
-      res = await axios.get(`/api/doctors/${id}`, { headers: { Authorization: `Bearer ${token}` } })
-    } else if (role === 'receptionist') {
-      res = await axios.get(`/api/receptionists/${id}`, { headers: { Authorization: `Bearer ${token}` } })
-    } else {
-      router.push('/login')
-      return
-    }
-
-    const data = res.data
-
-    currentUser.value.name = `${data.firstName} ${data.lastName}`
-    currentUser.value.svg = data.profilePhoto || currentUser.value.svg
-  } catch (err) {
-    console.error('Failed to load profile:', err)
-  }
-})
-
-const filteredMenuItems = computed(() =>
-  menuItems.filter(item => !item.roles || item.roles.includes(userRole.value))
+const filteredSidebarItems = computed(() =>
+  sidebarItems.filter(item =>
+    !item.roles || item.roles.includes(user.value.role)
+  )
 )
+
+const activeTab = computed(() => tabsStore.activeTab)
+
+// List of route names that should NOT show the tab framework
+const publicRoutes = [
+  'Login',
+  'Register',
+  'RegisterDoctor',
+  'RegisterReceptionist',
+  'RequestPasswordReset',
+  'ResetPassword'
+]
+
+const isPublicRoute = computed(() => publicRoutes.includes(route.name))
+
+// You may want to fetch the real user info here as you already do in your onMounted
 </script>
 
 <style>
-.layout {
+.app-layout {
   display: flex;
   height: 100vh;
 }
 
-.content-area {
+.main-content {
   flex-grow: 1;
   padding: 1.5rem 2.5rem;
   background: #fff;

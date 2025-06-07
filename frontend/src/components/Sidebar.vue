@@ -7,10 +7,11 @@
     <nav class="menu-list">
       <ul>
         <li v-for="item in items" :key="item.label">
-          <router-link
-            :to="item.route"
+          <a
             class="nav-item"
-            active-class="is-active"
+            :class="{ 'is-active': $route.path === (typeof item.route === 'string' ? item.route : item.route?.path) }"
+            @click.prevent="handleSidebarClick(item)"
+            href="#"
           >
             <span class="icon">
               <img
@@ -22,11 +23,11 @@
               <i v-else :class="item.icon"></i>
             </span>
             {{ item.label }}
-          </router-link>
+          </a>
         </li>
       </ul>
     </nav>
-    
+
       <router-link to="/diagnosis/drafts" class="nav-link">
         <span class="icon">📝</span>
         <span>My Drafts</span>
@@ -50,10 +51,27 @@
 </template>
 
 <script setup>
+import { useTabsStore } from '@/stores/tabs'
+import { useRouter } from 'vue-router'
+
 defineProps({
   items: Array,
   user: Object
 })
+
+const tabsStore = useTabsStore()
+const router = useRouter()
+
+function handleSidebarClick(item) {
+  // Always update the default tab (key: 'home')
+  tabsStore.openTab({
+    key: 'home',
+    title: item.label,
+    route: item.route, // Should be a route object, e.g. { name: 'Dashboard' }
+    closeable: false
+  })
+  router.push(item.route)
+}
 </script>
 
 <style scoped>
