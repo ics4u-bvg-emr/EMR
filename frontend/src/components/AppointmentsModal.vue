@@ -1,8 +1,9 @@
 <template>
     <div class="modal-backdrop">
         <div class="modal-content">
-            <h3 v-if="isViewing">Appointment Details</h3>
-            <h3 v-else>New Appointment</h3>
+          <h3 v-if="isViewing && !isEditing">Appointment Details</h3>
+          <h3 v-else-if="isEditing">Edit Appointment</h3>
+          <h3 v-else>New Appointment</h3>
             <!-- add -->
             <form v-if="!isViewing && !props.isDoctor" @submit.prevent="addAppt">
                 <label>Doctor:</label>
@@ -33,22 +34,52 @@
                     <button type="submit">Create</button>
                     <button type="button" @click="$emit('close')">Cancel</button>
                 </div>
-            </form>
+          </form>
+          <!-- edit -->
+          <div v-else>
+            <div v-if="isEditing">
+              <div class="form-group">
+                <label>Start:</label>
+                <input type="datetime-local" v-model="start" required />
+              </div>
+              
+              <div class="form-group">
+                <label>End:</label>
+                <input type="datetime-local" v-model="end" required />
+              </div>
+              
+              <div class="form-group">
+                <label>Reason:</label>
+                <input v-model="reason" />
+              </div>
+
+              <div class="form-group">
+                <label>Notes:</label>
+                <textarea v-model="notes" />
+              </div>
+
+              <div class="actions">
+                <button @click="updateAppt">Save</button>
+                <button type="button" @click="isEditing = false">Cancel</button>
+              </div>
+            </div>
             <!-- view -->
             <div v-else>
-                <p><b>Title:</b> {{ props.event.title }}</p>
-                <p v-if="!props.isDoctor"><b>Doctor:</b> {{ props.event.extendedProps.doctorName }}</p>
-                <p><b>Patient:</b> {{ props.event.extendedProps.patientName || 'N/A' }}</p>
-                <p><b>Start:</b> {{ formatDateTime(props.event.start) }}</p>
-                <p><b>End:</b> {{ formatDateTime(props.event.end) }}</p>
-                <p><b>Status:</b> {{ props.event.extendedProps.status }}</p>
-                <p><b>Notes:</b> {{ props.event.extendedProps.notes }}</p>
-                <div class="actions">
-                    <button v-if="!props.isDoctor" @click="editAppt">Edit</button>
-                    <button v-if="!props.isDoctor" @click="deleteAppt">Delete</button>
-                    <button type="button" @click="$emit('close')">Close</button>
-                </div>
+              <p><b>Title:</b> {{ props.event.title }}</p>
+              <p v-if="!props.isDoctor"><b>Doctor:</b> {{ props.event.extendedProps.doctorName }}</p>
+              <p><b>Patient:</b> {{ props.event.extendedProps.patientName || 'N/A' }}</p>
+              <p><b>Start:</b> {{ formatDateTime(props.event.start) }}</p>
+              <p><b>End:</b> {{ formatDateTime(props.event.end) }}</p>
+              <p><b>Status:</b> {{ props.event.extendedProps.status }}</p>
+              <p><b>Notes:</b> {{ notes }}</p>
+
+              <div class="actions">
+                <button v-if="!props.isDoctor" @click="isEditing = true">Edit</button>
+                <button v-if="!props.isDoctor" @click="deleteAppt">Delete</button>
+                <button type="button" @click="$emit('close')">Close</button>
+              </div>
             </div>
+          </div>
         </div>
     </div>
 </template>
@@ -75,6 +106,7 @@
     const patients = ref([])
 
     const isViewing = computed(() => !!props.event);
+    const isEditing = ref(false);
 
     const addAppt = async () => {
         if (!start.value || !end.value || !selectedPatient.value) {
@@ -100,10 +132,22 @@
         }
     }
 
-    const editAppt = () => {
+    const updateAppt = async () => {
+      try {
+        const res = await axios.put(`http://localhost:3000/api/appointments/${props.event.id}`, {
+          start: new Date(start.value).toISOString(),
+          end: new Date(end.value).toISOString(),
+          reason: reason.value.trim(),
+          notes: notes.value.trim(),
+        });
 
+        emit('submitted', res.data);
+        emit('close');
+      } catch (err) {
+        console.error('Failed to update appointment:', err);
+        alert('Failed to update appointment.');
+      }
     };
-
 
     const deleteAppt = async () => {
       const confirmDelete = confirm('Are you sure you want to delete this appointment?');
@@ -130,15 +174,27 @@
         return new Date(datetime).toLocaleString(undefined, options);
     }
 
+    function toLocalDateTime(dateStr) {
+      const d = new Date(dateStr);
+      return d.toISOString().slice(0, 16);
+    }
+
+
     watch(() => props.event, (newVal) => {
-        if (!newVal) {
-            selectedDoctor.value = '';
-            selectedPatient.value = '';
-            start.value = '';
-            end.value = '';
-            reason.value = '';
-            notes.value = '';
-        }
+      if (!newVal) {
+        selectedDoctor.value = '';
+        selectedPatient.value = '';
+        start.value = '';
+        end.value = '';
+        reason.value = '';
+        notes.value = '';
+        isEditing.value = false;
+      } else {
+        start.value = toLocalDateTime(newVal.start);
+        end.value = toLocalDateTime(newVal.end);
+        reason.value = newVal.title || '';
+        notes.value = newVal.extendedProps?.notes || '';
+      }
     });
 
     onMounted(async () => {
@@ -248,5 +304,11 @@
 
 .actions button:active {
   transform: scale(0.98);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
 }
 </style>
