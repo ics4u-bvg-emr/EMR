@@ -91,7 +91,7 @@
                 </span>
               </li>
             </ul>
-            <router-link class="is-size-7" to="/patients">View all</router-link>
+            <router-link class="is-size-7" to="/reports">View all</router-link>
           </div>
         </div>
       </div>

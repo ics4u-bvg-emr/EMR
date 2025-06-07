@@ -16,11 +16,6 @@
                 🧑‍💼 Receptionist
               </button>
             </router-link>
-            <router-link to="/register-user">
-              <button class="button is-link is-medium is-rounded">
-                👤 Patient
-              </button>
-            </router-link>
           </div>
         </div>
       </div>
