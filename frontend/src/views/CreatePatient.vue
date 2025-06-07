@@ -250,6 +250,7 @@ const submitForm = async () => {
       medicalHistory: { pastConditions: [], currentPrescriptions: [], familyHistory: [], notes: '' }
     })
 
+    alert('Patient Submitted!')
     allergyInput.value = ''
     pastConditions.value = ''
     currentPrescriptions.value = ''
