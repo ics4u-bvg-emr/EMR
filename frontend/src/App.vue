@@ -43,8 +43,8 @@ const sidebarItems = [
 ]
 
 const user = ref({
-  svg: 'https://bulma.io/images/placeholders/128x128.png',
-  name: 'Jane Doe',
+  svg: circleUserSvg,
+  name: 'Profile',
   route: '/profile',
   get role() { return userRole.value } // <-- Make role reactive!
 })
