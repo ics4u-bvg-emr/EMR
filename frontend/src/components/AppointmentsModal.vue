@@ -3,11 +3,15 @@
         <div class="modal-content">
             <h3 v-if="isViewing">Appointment Details</h3>
             <h3 v-else>New Appointment</h3>
-            <form v-if="!isViewing" @submit.prevent="submitForm">
-                <label>Doctor ID:</label>
-                <input v-model="doctorId" required />
+            <!-- add -->
+            <form v-if="!isViewing && !props.isDoctor" @submit.prevent="addAppt">
+                <label>Doctor:</label>
+                <select v-model="selectedDoctor" required>
+                    <option disabled value="">Select a doctor</option>
+                    <option v-for="d in doctors" :key="d.id" :value="d.id">{{ d.name }}</option>
+                </select>
 
-                <label>Patient Name:</label>
+                <label>Patient:</label>
                 <select v-model="selectedPatient" required>
                     <option disabled value="">Select a patient</option>
                     <option v-for="p in patients" :key="p.id" :value="p.id">{{ p.name }}</option>
@@ -30,6 +34,7 @@
                     <button type="button" @click="$emit('close')">Cancel</button>
                 </div>
             </form>
+            <!-- view -->
             <div v-else>
                 <p><b>Title:</b> {{ props.event.title }}</p>
                 <p><b>Patient:</b> {{ props.event.extendedProps.patientName || 'N/A' }}</p>
@@ -38,6 +43,8 @@
                 <p><b>Status:</b> {{ props.event.extendedProps.status }}</p>
                 <p><b>Notes:</b> {{ props.event.extendedProps.notes }}</p>
                 <div class="actions">
+                    <button v-if="!props.isDoctor" @click="editAppt">Edit</button>
+                    <button v-if="!props.isDoctor" @click="deleteAppt">Delete</button>
                     <button type="button" @click="$emit('close')">Close</button>
                 </div>
             </div>
@@ -51,21 +58,24 @@
 
     const emit = defineEmits(['close', 'submitted'])
     const props = defineProps({
-        date: String,
-        event: Object
+        // date: String,
+        event: Object,
+        isDoctor: Boolean,
+        doctorId: String,
     });
 
-    const doctorId = ref('')
+    const selectedDoctor = ref('')
     const selectedPatient = ref('')
     const start = ref('')
     const end = ref('')
     const reason = ref('')
     const notes = ref('')
+    const doctors = ref([])
     const patients = ref([])
 
     const isViewing = computed(() => !!props.event);
 
-    const submitForm = async () => {
+    const addAppt = async () => {
         if (!start.value || !end.value || !selectedPatient.value) {
             alert('Please fill in all required fields');
             return;
@@ -73,7 +83,7 @@
 
         try {
             const res = await axios.post('http://localhost:3000/api/appointments', {
-                doctorId: doctorId.value.trim(),
+                doctorId: selectedDoctor.value,
                 patientId: selectedPatient.value,
                 start: new Date(start.value).toISOString(),
                 end: new Date(end.value).toISOString(),
@@ -89,6 +99,25 @@
         }
     }
 
+    const editAppt = () => {
+
+    };
+
+
+    const deleteAppt = async () => {
+      const confirmDelete = confirm('Are you sure you want to delete this appointment?');
+      if (!confirmDelete) return;
+
+      try {
+        await axios.delete(`http://localhost:3000/api/appointments/${props.event.id}`);
+        emit('submitted');
+        emit('close');
+      } catch (err) {
+        console.error('Failed to delete appointment:', err);
+        alert('Failed to delete appointment.');
+      }
+    };
+
     function formatDateTime(datetime) {
         const options = {
             year: 'numeric',
@@ -102,7 +131,7 @@
 
     watch(() => props.event, (newVal) => {
         if (!newVal) {
-            doctorId.value = '';
+            selectedDoctor.value = '';
             selectedPatient.value = '';
             start.value = '';
             end.value = '';
@@ -113,13 +142,19 @@
 
     onMounted(async () => {
         try {
-            const res = await axios.get('http://localhost:3000/api/patients');
-            patients.value = res.data.map(p => ({
+            const patientRes = await axios.get('http://localhost:3000/api/patients');
+            patients.value = patientRes.data.map(p => ({
                 id: p._id,
                 name: `${p.firstName} ${p.lastName}`,
             }));
+
+            const doctorRes = await axios.get('http://localhost:3000/api/doctors');
+            doctors.value = doctorRes.data.map(d => ({
+                id: d._id,
+                name: `${d.firstName} ${d.lastName}`,
+            }));
         } catch (err) {
-            console.error('Error loading patients:', err);
+            console.error('Error loading:', err);
         }
     });
 </script>

@@ -82,7 +82,7 @@
 
       console.log('✅ Login success:', response.data);
 
-      const { token, role, username: returnedUsername } = response.data;
+      const { token, role, username: returnedUsername, doctorId } = response.data;
 
       if (!token || !role) {
         throw new Error('Login failed: missing token or role.');
@@ -92,6 +92,15 @@
       localStorage.setItem('role', role);
       localStorage.setItem('username', returnedUsername || username.value);
       localStorage.setItem('loginAttempts', '0');
+
+      if (role === 'doctor') {
+        localStorage.setItem('doctorId', doctorId);
+      } else {
+        localStorage.removeItem('doctorId');
+      }
+
+      localStorage.setItem('role', role);
+      
       setUserRole(role); // <-- Make sure this is before router.push
 
       if (role === 'doctor') {

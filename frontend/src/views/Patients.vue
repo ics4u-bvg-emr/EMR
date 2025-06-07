@@ -1,6 +1,6 @@
 <template>
   <main class="home-screen">
-    <h2>Records</h2>
+    <h2>Patients</h2>
 
     <!-- Search Input -->
   <div class="field mb-4">

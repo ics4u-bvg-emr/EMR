@@ -4,6 +4,8 @@
     <FullCalendar ref="calendarRef" :options="calendarOptions" />
     <AppointmentsModal
       v-if="showModal"
+      :is-doctor="isDoctor"
+      :doctor-id="doctorId"
       :date="selectedDate"
       :event="selectedEvent"
       @close="showModal = false"
@@ -21,6 +23,9 @@ import multiMonthPlugin from '@fullcalendar/multimonth';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import axios from 'axios';
 import AppointmentsModal from '../components/AppointmentsModal.vue';
+
+const isDoctor = localStorage.getItem('role') === 'doctor';
+const doctorId = localStorage.getItem('doctorId');
 
 const calendarRef = ref(null);
 const showModal = ref(false);
@@ -64,14 +69,25 @@ const toISO = (dateStr) => {
 };
 
 const fetchAppointments = async () => {
-  try {
-    const res = await axios.get('http://localhost:3000/api/appointments');
+    try {
+    let url = 'http://localhost:3000/api/appointments';
+
+    if (isDoctor && doctorId) {
+      url += `?doctorId=${doctorId}`;
+    }
+
+    const res = await axios.get(url);
+
     const validEvents = res.data
       .map((appt) => {
         const startISO = toISO(appt.start);
         const endISO = toISO(appt.end);
         if (!startISO || !endISO) return null;
-        const patientName = appt.patientId ? `${appt.patientId.firstName} ${appt.patientId.lastName}` : 'Unknown Patien'
+
+        const doctorName = appt.doctorId? `${appt.doctorId.firstName} ${appt.doctorId.lastName}` : 'Unknown Doctor';
+
+        const patientName = appt.patientId ? `${appt.patientId.firstName} ${appt.patientId.lastName}`: 'Unknown Patient';
+
         return {
           id: appt._id,
           title: `${appt.reason || 'Appointment'}`,
@@ -81,11 +97,13 @@ const fetchAppointments = async () => {
           extendedProps: {
             notes: appt.notes || '',
             status: appt.status,
+            doctorName,
             patientName
           },
         };
       })
       .filter(Boolean);
+
     calendarOptions.value.events = validEvents;
   } catch (err) {
     console.error('Failed to fetch appointments:', err);

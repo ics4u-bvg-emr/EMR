@@ -39,14 +39,14 @@
         <div class="column is-two-thirds">
           <div class="box">
             <h3 class="title is-5">Personal Details</h3>
-            <div class="field">
+                        <div class="field">
               <label class="label">Full Name</label>
               <div class="control">
                 <input v-if="isEditing" class="input" type="text" v-model="user.fullName" />
                 <p v-else class="is-size-5">{{ user.fullName }}</p>
               </div>
             </div>
-            <div class="field">
+                        <div class="field">
               <label class="label">Username / ID</label>
               <div class="control">
                 <input v-if="isEditing" class="input" type="text" v-model="user.username" />
@@ -133,8 +133,8 @@
             <div class="field">
               <label class="label">On-call Status</label>
               <div class="control">
-                <label class="checkbox" v-if="isEditing">
-                  <input v-if="isEditing" type="checkbox" v-model="user.onCall" />
+                <label v-if="isEditing" class="checkbox">
+                  <input type="checkbox" v-model="user.onCall" />
                   {{ user.onCall ? 'On Call' : 'Off Call' }}
                 </label>
                 <p v-else class="is-size-5">{{ user.onCall ? 'On Call' : 'Off Call' }}</p>
@@ -166,7 +166,7 @@
           </div>
 
           <div class="box has-text-centered">
-            <router-link class="button is-light is-fullwidth" to="/changepassword">Change Username/Password</router-link>
+            <router-link class="button is-light is-fullwidth" to="/request-password-reset">Change Username/Password</router-link>
           </div>
         </div>
       </div>
@@ -178,11 +178,12 @@
 import { ref, reactive, onMounted } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
-import { setUserRole } from '@/stores/user.js'
+import { setUserRole } from '@/stores/user.js';
 
 const router = useRouter();
 const isEditing = ref(false);
 const fileName = ref('');
+
 const user = reactive({
   fullName: '',
   username: '',
@@ -201,12 +202,11 @@ const user = reactive({
   patientLoad: 0
 });
 
+// auth stuffs
 const token = localStorage.getItem('token');
-const decoded = token ? JSON.parse(atob(token.split('.')[1])) : {};
 let doctorId = null;
 
 onMounted(async () => {
-  const token = localStorage.getItem('token');
   if (!token) {
     router.push('/login');
     return;
@@ -220,88 +220,94 @@ onMounted(async () => {
     return;
   }
 
-  const role = decoded.role;
-  const userId = decoded.id;
+  const { id, role } = decoded;
+  doctorId = id;
 
-  if (!userId || !role) {
+  if (!id || !role) {
     router.push('/login');
     return;
   }
 
   try {
-    let res, data;
+    let res;
     if (role === 'doctor') {
-      res = await axios.get(`/api/doctors/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      data = res.data;
-      Object.assign(user, {
-        fullName: `${data.firstName} ${data.lastName}`,
-        username: data.username,
-        profilePhoto: data.profilePhoto || user.profilePhoto,
-        gender: data.gender || '',
-        dob: data.dob ? data.dob.split('T')[0] : '',
-        email: data.email,
-        phone: data.phone || '',
-        bio: data.bio || '',
-        address: data.address || '',
-        specialty: data.specialization || '',
-        experience: data.experience || 0,
-        certifications: data.certifications || '',
-        onCall: data.onCall || false,
-        hours: data.hours || '',
-        patientLoad: data.patientLoad || 0
-      });
+      res = await axios.get(`/api/doctors/${id}`, { headers: { Authorization: `Bearer ${token}` } });
     } else if (role === 'receptionist') {
-      res = await axios.get(`/api/receptionists/${userId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      data = res.data;
-      Object.assign(user, {
-        fullName: `${data.firstName} ${data.lastName}`,
-        username: data.username,
-        profilePhoto: data.profilePhoto || user.profilePhoto,
-        email: data.email,
-        phone: data.phone || '',
-        bio: data.bio || '',
-        address: data.address || '',
-        // Add any other receptionist fields here
-      });
+      res = await axios.get(`/api/receptionists/${id}`, { headers: { Authorization: `Bearer ${token}` } });
     } else {
       router.push('/login');
       return;
     }
+
+    const data = res.data;
+    user.fullName = `${data.firstName} ${data.lastName}`;
+    user.username = data.username;
+    user.profilePhoto = data.profilePhoto || user.profilePhoto;
+    user.gender = data.gender || '';
+    user.dob = data.dob ? data.dob.split('T')[0] : '';
+    user.email = data.email;
+    user.phone = data.phone || '';
+    user.bio = data.bio || '';
+    user.address = data.address || '';
+    user.specialty = data.specialization || '';
+    user.experience = data.experience || 0;
+    user.certifications = data.certifications || '';
+    user.onCall = data.onCall || false;
+    user.hours = data.hours || '';
+    user.patientLoad = data.patientLoad || 0;
+
+    setUserRole(role);
   } catch (err) {
-    // Only redirect if unauthorized (token expired/invalid)
     if (err.response && err.response.status === 401) {
       router.push('/login');
     } else {
-      // Optionally show an error message for other errors
       console.error('Failed to load profile:', err);
     }
   }
 });
 
+//image upload also evil... glhf
+async function onImageChange(event) {
+  const file = event.target.files[0];
+  if (!file) return;
 
-function handleEditToggle() {
-  if (isEditing.value) {
-    saveProfile();
+  fileName.value = file.name;
+  user.profilePhoto = URL.createObjectURL(file);
+
+  const formData = new FormData();
+  formData.append('photo', file);
+
+  try {
+    const res = await axios.put(`/api/doctors/${doctorId}/profile-photo`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    user.profilePhoto = res.data.profilePhoto;
+  } catch (err) {
+    console.error('Failed to upload profile photo:', err);
   }
+}
+
+//edit mode (kinda evil? might be working idk ^_^ :3)
+function handleEditToggle() {
+  if (isEditing.value) saveProfile();
   isEditing.value = !isEditing.value;
 }
 
 async function saveProfile() {
-  const [firstName, lastName = ''] = user.fullName.trim().split(' ');
-
   try {
-    await axios.put(`/api/doctors/${doctorId}`, {
+    const [firstName, ...lastNameParts] = user.fullName.split(' ');
+    const lastName = lastNameParts.join(' ');
+
+    const updatedData = {
       firstName,
       lastName,
       username: user.username,
-      email: user.email,
-      profilePhoto: user.profilePhoto,
       gender: user.gender,
       dob: user.dob,
+      email: user.email,
       phone: user.phone,
       bio: user.bio,
       address: user.address,
@@ -311,31 +317,20 @@ async function saveProfile() {
       onCall: user.onCall,
       hours: user.hours,
       patientLoad: user.patientLoad
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+    };
 
-    console.log('✅ Profile saved successfully.');
+    await axios.put(`/api/doctors/${doctorId}`, updatedData, { headers: { Authorization: `Bearer ${token}` } });
+    console.log('Profile saved.');
   } catch (err) {
-    console.error('❌ Failed to save profile:', err);
-    alert('Error saving profile.');
+    console.error('Failed to save profile:', err);
   }
 }
 
-function onImageChange(event) {
-  const file = event.target.files[0];
-  if (file) {
-    fileName.value = file.name;
-    user.profilePhoto = URL.createObjectURL(file);
-  }
-}
-
+// Logout
 function logout() {
-  localStorage.removeItem('token')
-  localStorage.removeItem('username')
-  localStorage.removeItem('loginAttempts')
-  setUserRole(null)
-  router.push('/login')
+  localStorage.removeItem('token');
+  setUserRole(null);
+  router.push('/login');
 }
 </script>
 
@@ -459,4 +454,3 @@ p.is-size-5 {
   }
 }
 </style>
-

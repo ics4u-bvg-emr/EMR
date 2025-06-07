@@ -17,7 +17,7 @@ const doctorSchema = new mongoose.Schema({
   resetToken: String,
   resetTokenExpires: Date,
 
-  profilePhoto: String,
+  profilePhoto: { type: String },
   gender: String,
   dob: Date,
   phone: String,

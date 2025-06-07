@@ -14,7 +14,7 @@
         </div>
         <div class="header-actions">
           <button class="btn-primary" @click="savePatient">Save</button>
-          <button class="btn-outline" @click="cancelEdit">Cancel</button>
+          <!-- <button class="btn-outline" @click="cancelEdit">Cancel</button> -->
         </div>
       </div>
 
@@ -201,7 +201,7 @@ import dayjs from 'dayjs';
 
 const router = useRouter()
 const route = useRoute()
-const patientId = route.params.id; 
+const patientId = route.params.id;
 
 const pdfInput = ref()
 const tabs = ref(['Summary', 'Diagnose'])
@@ -324,14 +324,14 @@ const pastAppointments = computed(() => {
 });
 
 
-// Cancel edit
-const cancelEdit = () => {
-  editing.value = {
-    medicalHistory: false,
-    allergies: false
-  };
-  fetchPatient(); // reload from server
-};
+// // Cancel edit
+// const cancelEdit = () => {
+//   editing.value = {
+//     medicalHistory: false,
+//     allergies: false
+//   };
+//   fetchPatient(); // reload from server
+// };
 
 watch(() => route.query.tab, (newTab) => {
   if (newTab) {
