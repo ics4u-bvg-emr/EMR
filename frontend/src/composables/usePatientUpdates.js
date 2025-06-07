@@ -1,75 +1,107 @@
 import { ref, computed } from 'vue'
 
+const lastPatientData = new Map()
+const updates = ref([])
+
 export function usePatientUpdates(patients, medicalRecords) {
-    const updates = computed(() => {
-        const list = []
+    const loading = ref(false)
+    const error = ref(null)
 
-        patients.value.forEach(patient => {
-        const updatedAt = new Date(patient.updatedAt || Date.now())
-        const name = `${patient.firstName} ${patient.lastName}`
+    async function fetchData() {
+        console.log('\n[Fetch] Starting patient + record fetch...')
+        loading.value = true
+        error.value = null
 
-        if (patient.medicalHistory?.allergies?.length) {
-            list.push({
-            id: `allergies-${patient._id}`,
-            patientId: patient._id,
-            patientName: name,
-            updatedAt,
-            type: 'Patient Info',
-            updateName: 'Updated Allergies',
-            details: patient.medicalHistory.allergies.join(', ')
-            })
+        try {
+        const [patientsRes, recordsRes] = await Promise.all([
+            fetch('http://localhost:3000/api/patients'),
+            fetch('http://localhost:3000/api/medical-records'),
+        ])
+
+        if (!patientsRes.ok || !recordsRes.ok) {
+            throw new Error('Failed to fetch')
         }
 
-        if (patient.weight != null) {
-            list.push({
-            id: `weight-${patient._id}`,
-            patientId: patient._id,
-            patientName: name,
-            updatedAt,
-            type: 'Patient Info',
-            updateName: 'Updated Weight',
-            details: `Weight: ${patient.weight} kg`
+        const newPatients = await patientsRes.json()
+        const newRecords = await recordsRes.json()
+        console.log(`[Fetch] Got ${newPatients.length} patients, ${newRecords.length} records`)
+
+        newPatients.forEach(patient => {
+            const prev = lastPatientData.get(patient._id)
+
+            if (!prev) {
+            console.log(`[Init] No previous snapshot for ${patient.firstName} ${patient.lastName}`)
+            lastPatientData.set(patient._id, { ...patient })
+            return
+            }
+
+            let changed = false
+
+            if (prev.height !== patient.height) {
+            changed = true
+            console.log(`[Change] Height changed for ${patient.firstName}: ${prev.height} → ${patient.height}`)
+            updates.value.push({
+                id: `height-${patient._id}-${Date.now()}`,
+                patientId: patient._id,
+                patientName: `${patient.firstName} ${patient.lastName}`,
+                type: 'Patient Info',
+                updateName: 'Updated Height',
+                details: `Height: ${patient.height} cm`,
+                timestamp: new Date()
             })
-        }
+            }
 
-        if (patient.height != null) {
-            list.push({
-            id: `height-${patient._id}`,
-            patientId: patient._id,
-            patientName: name,
-            updatedAt,
-            type: 'Patient Info',
-            updateName: 'Updated Height',
-            details: `Height: ${patient.height} cm`
+            if (prev.weight !== patient.weight) {
+            changed = true
+            console.log(`[Change] Weight changed for ${patient.firstName}: ${prev.weight} → ${patient.weight}`)
+            updates.value.push({
+                id: `weight-${patient._id}-${Date.now()}`,
+                patientId: patient._id,
+                patientName: `${patient.firstName} ${patient.lastName}`,
+                type: 'Patient Info',
+                updateName: 'Updated Weight',
+                details: `Weight: ${patient.weight} kg`,
+                timestamp: new Date()
             })
+            }
+
+            if (!changed) {
+            console.log(`[No Change] ${patient.firstName} unchanged`)
+            }
+
+            lastPatientData.set(patient._id, { ...patient })
+        })
+
+        patients.value = newPatients
+
+        newRecords.forEach(record => {
+            if (!medicalRecords.value.some(r => r._id === record._id)) {
+            console.log(`[Record] New record for ${record.patientId}: ${record.reason || 'no reason provided'}`)
+            medicalRecords.value.push(record)
+            } else {
+            console.log(`[Record] Record ${record._id} already exists, skipping`)
+            }
+        })
+
+        } catch (err) {
+        error.value = 'Error loading updates: ' + err.message
+        console.error('[Error]', err.message)
+        } finally {
+        loading.value = false
         }
-        })
-
-        medicalRecords.value.forEach(record => {
-        list.push({
-            id: `record-${record._id}`,
-            patientId: record.patientId,
-            patientName: getPatientName(record.patientId),
-            updatedAt: new Date(record.updatedAt || record.date),
-            type: 'Medical Record',
-            updateName: record.updateName || record.title || 'Medical Update',
-            details: record.description || ''
-        })
-        })
-
-        return list.sort((a, b) => b.updatedAt - a.updatedAt)
-    })
-
-    function getPatientName(id) {
-        const p = patients.value.find(p => p._id === id)
-        return p ? `${p.firstName} ${p.lastName}` : 'Unknown'
     }
 
-    const recentUpdates = computed(() => updates.value.slice(0, 5))
+    const sortedUpdates = computed(() =>
+        [...updates.value].sort((a, b) => b.timestamp - a.timestamp)
+    )
 
+    // ✅ Trigger fetch immediately so updates work
+    fetchData()
 
     return {
-        updates,
-        recentUpdates,
+        updates: sortedUpdates,
+        fetchData,
+        loading,
+        error,
     }
 }

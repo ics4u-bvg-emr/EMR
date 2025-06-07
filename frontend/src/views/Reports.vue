@@ -48,7 +48,7 @@
               <p>
                 <strong>{{ update.patientName }}</strong>
                 <span class="tag is-info is-light ml-2">{{ update.type }}</span>
-                <small class="has-text-grey ml-3">{{ formatDate(update.updatedAt) }}</small>
+                <small class="has-text-grey ml-3">{{ formatDate(update.timestamp) }}</small>
               </p>
               <p><em>{{ update.updateName }}</em></p>
               <p>{{ update.details }}</p>
