@@ -35,7 +35,11 @@
         class="appointment-card"
       >
         <div class="card-header">
-          <h3>{{ appt.patientId.firstName }} {{ appt.patientId.lastName }}</h3>
+          <h3 v-if="appt.patientId">
+              {{ appt.patientId.firstName || 'Unknown' }} {{ appt.patientId.lastName || '' }}
+          </h3>
+          <h3 v-else>Unknown Patient</h3>
+
           <span
             class="tag"
             :class="{
@@ -59,6 +63,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import axios from 'axios'
 
 const doctors = ref([])
 const appointments = ref([])
@@ -69,16 +74,21 @@ const error = ref(null)
 const fetchData = async () => {
   loading.value = true
   try {
-    const [doctorsRes, apptRes] = await Promise.all([
-      fetch('http://localhost:3000/api/doctors'),
-      fetch('http://localhost:3000/api/appointments')
-    ])
-    if (!doctorsRes.ok || !apptRes.ok) throw new Error('Failed to fetch data')
+    const token = localStorage.getItem('token')
 
-    doctors.value = await doctorsRes.json()
-    appointments.value = await apptRes.json()
+    const [doctorsRes, apptRes] = await Promise.all([
+      axios.get('http://localhost:3000/api/doctors', {
+        headers: { Authorization: `Bearer ${token}` }
+      }),
+      axios.get('http://localhost:3000/api/appointments', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+    ])
+
+    doctors.value = doctorsRes.data
+    appointments.value = apptRes.data
   } catch (err) {
-    error.value = err.message
+    error.value = err.response?.data?.message || err.message
   } finally {
     loading.value = false
   }
@@ -86,7 +96,10 @@ const fetchData = async () => {
 
 const filteredAppointments = computed(() => {
   if (!selectedDoctorId.value) return []
-  return appointments.value.filter(a => a.doctorId === selectedDoctorId.value)
+  return appointments.value.filter(a => {
+    const docId = a.doctorId?._id || a.doctorId
+    return docId === selectedDoctorId.value
+  })
 })
 
 const formatDate = (dateStr) => {
@@ -96,6 +109,7 @@ const formatDate = (dateStr) => {
 
 onMounted(fetchData)
 </script>
+
 
 <style scoped>
 .home-screen {
