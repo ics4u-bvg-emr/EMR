@@ -23,7 +23,9 @@ import multiMonthPlugin from '@fullcalendar/multimonth';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import axios from 'axios';
 import AppointmentsModal from '../components/AppointmentsModal.vue';
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const isDoctor = localStorage.getItem('role') === 'doctor';
 const doctorId = localStorage.getItem('doctorId');
 
@@ -31,6 +33,9 @@ const calendarRef = ref(null);
 const showModal = ref(false);
 const selectedDate = ref('');
 const selectedEvent = ref(null);
+
+    const id = ref(null);
+    const role = ref(null);
 
 const calendarOptions = ref({
   plugins: [dayGridPlugin, interactionPlugin, multiMonthPlugin, timeGridPlugin],
@@ -48,9 +53,9 @@ const calendarOptions = ref({
     showModal.value = true;
   },
   eventClick(info) {
-    selectedEvent.value = info.event;
-    selectedDate.value = info.event.startStr;
-    showModal.value = true;
+  selectedEvent.value = info.event ? info.event : null;
+  selectedDate.value = info.event ? info.event.startStr : '';
+  showModal.value = true;
   },
   dayCellDidMount(info) {
     info.el.addEventListener('mouseenter', () => {
@@ -68,29 +73,87 @@ const toISO = (dateStr) => {
   return !isNaN(d) ? d.toISOString() : '';
 };
 
-const fetchAppointments = async () => {
-    try {
-    let url = 'http://localhost:3000/api/appointments';
+// const fetchAppointments = async () => {
+//     try {
+//     let url = 'http://localhost:3000/api/appointments';
 
-    if (isDoctor && doctorId) {
-      url += `?doctorId=${doctorId}`;
-    }
+//     if (isDoctor && doctorId) {
+//       url += `?doctorId=${doctorId}`;
+//     }
+
+//     const res = await axios.get(url);
+
+//     const dres = await axios.get(`http://localhost:3000/api/doctors/${id}`, {
+//       headers: {authorization: `Bearer ${token}`}
+//     })
+//     const data = dres.data
+//     const validEvents = res.data
+//       .map((appt) => {
+//         if (role === 'doctor' && id !== appt.doctorId._id) {
+//           return false;
+//         }
+
+//         const startISO = toISO(appt.start);
+//         const endISO = toISO(appt.end);
+//         if (!startISO || !endISO) return null;
+
+//         const doctorName = `${data.firstName} ${data.lastName}`;
+// console.log('Doctor object in appointment:', appt.doctorId);
+
+
+//         const patientName = appt.patientId ? `${appt.patientId.firstName} ${appt.patientId.lastName}`: 'Unknown Patient';
+
+//         return {
+//           id: appt._id,
+//           title: `${appt.reason || 'Appointment'}`,
+//           start: startISO,
+//           end: endISO,
+//           allDay: false,
+//           extendedProps: {
+//             notes: appt.notes || '',
+//             status: appt.status,
+//             doctorName,
+//             patientName
+//           },
+//         };
+//       })
+//       .filter(Boolean);
+
+//     calendarOptions.value.events = validEvents;
+//   } catch (err) {
+//     console.error('Failed to fetch appointments:', err);
+//   }
+// };
+
+const fetchAppointments = async () => {
+  try {
+    let url = 'http://localhost:3000/api/appointments';
 
     const res = await axios.get(url);
 
     const validEvents = res.data
+      .filter((appt) => {
+        if (role.value === 'doctor') {
+          return String(appt.doctorId?._id || appt.doctorId) === id.value;
+        }
+        return true;
+      })
       .map((appt) => {
         const startISO = toISO(appt.start);
         const endISO = toISO(appt.end);
         if (!startISO || !endISO) return null;
 
-        const doctorName = appt.doctorId? `${appt.doctorId.firstName} ${appt.doctorId.lastName}` : 'Unknown Doctor';
+        const doctorName = appt.doctorId?.firstName
+          ? `${appt.doctorId.firstName} ${appt.doctorId.lastName}`
+          : 'Unknown Doctor';
 
-        const patientName = appt.patientId ? `${appt.patientId.firstName} ${appt.patientId.lastName}`: 'Unknown Patient';
+        const patientName = appt.patientId
+          ? `${appt.patientId.firstName} ${appt.patientId.lastName}`
+          : 'Unknown Patient';
 
         return {
           id: appt._id,
-          title: `${appt.reason || 'Appointment'}`,
+          title: appt.reason || 'Appointment',
           start: startISO,
           end: endISO,
           allDay: false,
@@ -98,7 +161,7 @@ const fetchAppointments = async () => {
             notes: appt.notes || '',
             status: appt.status,
             doctorName,
-            patientName
+            patientName,
           },
         };
       })
@@ -109,6 +172,7 @@ const fetchAppointments = async () => {
     console.error('Failed to fetch appointments:', err);
   }
 };
+
 
 const handleSubmitted = async () => {
   showModal.value = false;
@@ -137,7 +201,38 @@ const handleSubmitted = async () => {
 //   return dateStr && !isNaN(Date.parse(dateStr));
 // }
 
-onMounted(fetchAppointments);
+// onMounted(fetchAppointments);
+
+onMounted(async () => {
+  const token = localStorage.getItem('token')
+
+  if (!token) {
+    router.push('/login')
+    return
+  }
+
+  let decoded
+  try {
+    decoded = JSON.parse(atob(token.split('.')[1]))
+  } catch {
+    console.log('hi')
+    router.push('/login')
+    return
+  }
+
+  id.value = decoded.id;
+  role.value = decoded.role;
+  // if (!id !== 'doctor') {
+  //   console.log('hiii')
+  //   router.push('/login')
+  //   return
+  // }
+
+  // console.log(id)
+
+  await fetchAppointments()
+})
+
 </script>
 
 <style scoped>

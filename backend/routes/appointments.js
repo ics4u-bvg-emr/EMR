@@ -7,17 +7,58 @@ const router = express.Router();
 const ObjectId = mongoose.Types.ObjectId;
 
 //GETS
-router.get('/appointments', async (req, res) => {
-    try{
-        const appointments = await Appointment.find().populate('patientId', 'firstName lastName').exec();
-        res.json(appointments);
-    }catch (error){
-        res.status(500).json({ 
-            message: "Error getting appointments", 
-            error: error.message 
-        });
-    }
+// router.get('/appointments', async (req, res) => {
+//     try{
+//         const appointments = await Appointment.find().populate('patientId', 'firstName lastName').exec();
+//         res.json(appointments);
+//     }catch (error){
+//         res.status(500).json({ 
+//             message: "Error getting appointments", 
+//             error: error.message 
+//         });
+//     }
+// });
+
+// router.get('/appointments', requireAuth, async (req, res) => {
+//     try {
+//         let query = {};
+
+//         if (req.user.role === 'doctor') {
+//             // Doctors only see their own appointments
+//             query.doctorId = req.user.id;
+//         }
+//         // Receptionists (or other roles) see all appointments (query is empty)
+
+//         const appointments = await Appointment.find(query)
+//             .populate('patientId', 'firstName lastName')
+//             .populate('doctorId', 'firstName lastName')  // also populate doctor info if needed
+//             .exec();
+
+//         res.json(appointments);
+//     } catch (error) {
+//         res.status(500).json({ 
+//             message: "Error getting appointments", 
+//             error: error.message 
+//         });
+//     }
+// });
+
+router.get('/appointments', requireAuth, async (req, res) => {
+  try {
+    const query = req.user.role === 'doctor' ? { doctorId: req.user.id } : {};
+
+    const appointments = await Appointment.find(query)
+      .populate('doctorId', 'firstName lastName')
+      .populate('patientId', 'firstName lastName')
+      .exec();
+
+    res.json(appointments);
+  } catch (err) {
+    res.status(500).json({ message: 'Error fetching appointments', error: err.message });
+  }
 });
+
+
 
 //POSTS
 router.post('/appointments', async (req, res) => {

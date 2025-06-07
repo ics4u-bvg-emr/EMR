@@ -37,6 +37,7 @@
             <!-- view -->
             <div v-else>
                 <p><b>Title:</b> {{ props.event.title }}</p>
+                <p v-if="!props.isDoctor"><b>Doctor:</b> {{ props.event.extendedProps.doctorName }}</p>
                 <p><b>Patient:</b> {{ props.event.extendedProps.patientName || 'N/A' }}</p>
                 <p><b>Start:</b> {{ formatDateTime(props.event.start) }}</p>
                 <p><b>End:</b> {{ formatDateTime(props.event.end) }}</p>
