@@ -6,7 +6,12 @@
       <!-- Header -->
       <div class="header-row">
         <div class="avatar">
-          <img :src="patient.profilePicture" class="profile-pic" />
+          <img
+            :src="patient.profilePicture || '/default-profile.png'"
+            :key="patientId"
+            alt="Profile Picture"
+            class="profile-pic"
+          />
         </div>
         <div>
           <h2 class="patient-name">{{ patient.firstName }} {{ patient.lastName }}</h2>
@@ -194,33 +199,23 @@
 
 <script setup>
 import DiagnosisFlow from '@/components/PatientDiagnosis/DiagnosisFlow.vue'
-import { ref, computed, onMounted, watch} from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
-import axios from 'axios';
-import dayjs from 'dayjs';
+import axios from 'axios'
+import dayjs from 'dayjs'
 
 const router = useRouter()
 const route = useRoute()
-const patientId = route.params.id;
+const patientId = computed(() => route.params.id)
 
-const pdfInput = ref()
-const tabs = ref(['Summary', 'Diagnose'])
-const currentTab = ref('Summary')
-
-const appointments = ref([]);
-const showPastAppointments = ref(true);
-const loading = ref(false)
-const error = ref(null)
-
-const patient = ref({
+const defaultPatient = {
   firstName: '',
   lastName: '',
   sex: '',
   dateOfBirth: '',
   height: 0,
   weight: 0,
+  profilePicture: '', // <-- Ensure this is always present
   contactInfo: {
     phoneNumber: '',
     email: '',
@@ -233,13 +228,24 @@ const patient = ref({
     familyHistory: [],
     notes: '',
   },
-});
+}
 
-// Track which sections are in edit mode
+const patient = ref({ ...defaultPatient })
+const appointments = ref([])
+const loading = ref(false)
+const error = ref(null)
+
+const tabs = ref(['Summary', 'Diagnose'])
+const currentTab = ref('Summary')
+
+const showPastAppointments = ref(true)
+
 const editing = ref({
+  basic: false,
+  contact: false,
+  allergies: false,
   medicalHistory: false,
-  allergies: false
-});
+})
 
 // Calculate age from DOB
 const age = computed(() => {
@@ -251,16 +257,27 @@ const age = computed(() => {
 })
 
 // Fetch patient data
+let fetchToken = 0
+
 const fetchPatient = async () => {
   loading.value = true
   error.value = null
+  patient.value = { ...defaultPatient }
+  const myToken = ++fetchToken
   try {
-    const response = await axios.get(`http://localhost:3000/api/patients/${patientId}`)
-    patient.value = response.data
+    const response = await axios.get(`https://emr-backend-h03z.onrender.com/api/patients/${patientId.value}`)
+    // Only update if this is the latest fetch
+    if (myToken === fetchToken) {
+      patient.value = { ...defaultPatient, ...response.data }
+    }
   } catch (err) {
-    error.value = 'Error loading patient: ' + err.message
+    if (myToken === fetchToken) {
+      error.value = 'Error loading patient: ' + err.message
+    }
   } finally {
-    loading.value = false
+    if (myToken === fetchToken) {
+      loading.value = false
+    }
   }
 }
 
@@ -268,8 +285,8 @@ const fetchAppointments = async () => {
   loading.value = true
   error.value = null
   try {
-    const { data } = await axios.get(`http://localhost:3000/api/appointments?patientId=${patientId}`);
-    appointments.value = data;
+    const { data } = await axios.get(`https://emr-backend-h03z.onrender.com/api/appointments?patientId=${patientId.value}`)
+    appointments.value = data
   } catch (err) {
     error.value = 'Error loading appointments: ' + err.message
   } finally {
@@ -281,9 +298,9 @@ const fetchAppointments = async () => {
 const savePatient = async () => {
   try {
     if (patientId) {
-      await axios.put(`http://localhost:3000/api/patients/${patientId}`, patient.value)
+      await axios.put(`https://emr-backend-h03z.onrender.com/api/patients/${patientId}`, patient.value)
     } else {
-      const response = await axios.post('http://localhost:3000/api/patients', patient.value)
+      const response = await axios.post('https://emr-backend-h03z.onrender.com/api/patients', patient.value)
       router.push(`/patients/${response.data._id}`)
     }
     alert('Patient saved successfully!')
@@ -294,10 +311,16 @@ const savePatient = async () => {
 }
 
 // Load patient data when component mounts
-onMounted(async () => {
-  fetchPatient(), fetchAppointments();
-  loading.value = false;
-});
+onMounted(() => {
+  fetchPatient()
+  fetchAppointments()
+})
+
+// Watch for patientId changes (tab/route switch)
+watch(patientId, () => {
+  fetchPatient()
+  fetchAppointments()
+})
 
 // Date formatting helpers
 const formatDate = (dateStr) => {

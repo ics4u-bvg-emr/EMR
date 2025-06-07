@@ -3,6 +3,15 @@ import { ref, computed, watch } from 'vue'
 
 const TABS_KEY = 'openTabs'
 const ACTIVE_TAB_KEY = 'activeTabKey'
+const DEFAULT_TAB_ROUTE_KEY = 'defaultTabLastRoute'
+
+function getUserKey() {
+  // Use a unique identifier for the user, e.g. username or user id
+  return localStorage.getItem('username') || localStorage.getItem('userId') || 'guest'
+}
+function getNamespacedKey(base) {
+  return `${base}:${getUserKey()}`
+}
 
 export const useTabsStore = defineStore('tabs', () => {
   // The default tab is always present and uncloseable
@@ -16,10 +25,23 @@ export const useTabsStore = defineStore('tabs', () => {
   ])
   const activeTabKey = ref('home')
 
+  // Track last route for default tab
+  const defaultTabLastRoute = ref(
+    JSON.parse(localStorage.getItem(getNamespacedKey(DEFAULT_TAB_ROUTE_KEY))) || { name: 'Dashboard' }
+  )
+
+  function setDefaultTabLastRoute(route) {
+    defaultTabLastRoute.value = route
+  }
+
+  watch(defaultTabLastRoute, (val) => {
+    localStorage.setItem(getNamespacedKey(DEFAULT_TAB_ROUTE_KEY), JSON.stringify(val))
+  }, { deep: true })
+
   // Restore tabs from localStorage
   function restoreTabs() {
-    const savedTabs = localStorage.getItem(TABS_KEY)
-    const savedActive = localStorage.getItem(ACTIVE_TAB_KEY)
+    const savedTabs = localStorage.getItem(getNamespacedKey(TABS_KEY))
+    const savedActive = localStorage.getItem(getNamespacedKey(ACTIVE_TAB_KEY))
     if (savedTabs) {
       try {
         const parsed = JSON.parse(savedTabs)
@@ -29,12 +51,19 @@ export const useTabsStore = defineStore('tabs', () => {
       } catch {}
     }
     if (savedActive) activeTabKey.value = savedActive
+    // Restore last route for default tab
+    const savedDefaultRoute = localStorage.getItem(getNamespacedKey(DEFAULT_TAB_ROUTE_KEY))
+    if (savedDefaultRoute) {
+      try {
+        defaultTabLastRoute.value = JSON.parse(savedDefaultRoute)
+      } catch {}
+    }
   }
 
   // Save tabs to localStorage on change
   watch([tabs, activeTabKey], () => {
-    localStorage.setItem(TABS_KEY, JSON.stringify(tabs.value))
-    localStorage.setItem(ACTIVE_TAB_KEY, activeTabKey.value)
+    localStorage.setItem(getNamespacedKey(TABS_KEY), JSON.stringify(tabs.value))
+    localStorage.setItem(getNamespacedKey(ACTIVE_TAB_KEY), activeTabKey.value)
   }, { deep: true })
 
   function openTab({ key, title, route, closeable = true }) {
@@ -68,5 +97,37 @@ export const useTabsStore = defineStore('tabs', () => {
     tabs.value.find(tab => tab.key === activeTabKey.value)
   )
 
-  return { tabs, activeTabKey, openTab, closeTab, setActiveTab, activeTab, restoreTabs }
+  function clearTabDataForCurrentUser() {
+    localStorage.removeItem(getNamespacedKey(TABS_KEY))
+    localStorage.removeItem(getNamespacedKey(ACTIVE_TAB_KEY))
+    localStorage.removeItem(getNamespacedKey(DEFAULT_TAB_ROUTE_KEY))
+  }
+
+  function resetTabs() {
+    tabs.value = [
+      {
+        key: 'home',
+        title: 'Home',
+        route: { name: 'Dashboard' },
+        closeable: false,
+      }
+    ]
+    activeTabKey.value = 'home'
+    defaultTabLastRoute.value = { name: 'Dashboard' }
+  }
+
+  return {
+    tabs,
+    activeTabKey,
+    openTab,
+    closeTab,
+    setActiveTab,
+    activeTab,
+    restoreTabs,
+    defaultTabLastRoute,
+    setDefaultTabLastRoute,
+    getUserKey,
+    clearTabDataForCurrentUser,
+    resetTabs,
+  }
 })

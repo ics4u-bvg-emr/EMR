@@ -60,8 +60,9 @@
   import { useRouter } from 'vue-router';
   import axios from 'axios';
   import { setUserRole } from '@/stores/user.js'
+  import { useTabsStore } from '@/stores/tabs'
 
-  axios.defaults.baseURL = 'http://localhost:3000'
+  axios.defaults.baseURL = 'https://emr-backend-h03z.onrender.com'
 
   const router = useRouter();
   const username = ref('');
@@ -70,6 +71,7 @@
   const passwordError = ref('');
   const loginAttempts = ref(parseInt(localStorage.getItem('loginAttempts')) || 0);
   const showRecoveryPrompt = ref(loginAttempts.value >= 3);
+  const tabsStore = useTabsStore()
 
   const handleLogin = async () => {
     try {
@@ -82,28 +84,66 @@
 
       console.log('✅ Login success:', response.data);
 
-      const { token, role, username: returnedUsername, doctorId } = response.data;
+      // Rename destructured fields to avoid conflict with refs
+      const { token, role, user, username: respUsername, id: respId, doctorId } = response.data;
 
       if (!token || !role) {
         throw new Error('Login failed: missing token or role.');
       }
 
+      // Defensive: use user.username or respUsername, user.id or respId
+      const usernameToStore = user?.username || respUsername || username.value.trim();
+      const userIdToStore = user?.id || respId || '';
+
       localStorage.setItem('token', token);
       localStorage.setItem('role', role);
-      localStorage.setItem('username', returnedUsername || username.value);
+      localStorage.setItem('username', usernameToStore);
+      localStorage.setItem('userId', userIdToStore);
       localStorage.setItem('loginAttempts', '0');
 
       if (role === 'doctor') {
-        localStorage.setItem('doctorId', doctorId);
+        localStorage.setItem('doctorId', user?.doctorId || doctorId || '');
       } else {
         localStorage.removeItem('doctorId');
       }
 
-      localStorage.setItem('role', role);
-      
-      setUserRole(role); // <-- Make sure this is before router.push
+      setUserRole(role);
 
-      if (role === 'doctor') {
+      tabsStore.restoreTabs();
+
+      const currentRoute = router.currentRoute.value;
+      const isPatientTab = currentRoute.name === 'PatientEdit' && currentRoute.params.id;
+      const currentTabKey = isPatientTab ? `patient-${currentRoute.params.id}` : null;
+
+      // If the current route is a patient tab and it's not in the restored tabs, add it
+      if (
+        isPatientTab &&
+        !tabsStore.tabs.find(tab => tab.key === currentTabKey)
+      ) {
+        tabsStore.openTab({
+          key: currentTabKey,
+          title: `Patient ${currentRoute.params.id}`,
+          route: { name: 'PatientEdit', params: { id: currentRoute.params.id } },
+          closeable: true
+        });
+        tabsStore.setActiveTab(currentTabKey);
+      } else if (
+        isPatientTab &&
+        tabsStore.tabs.find(tab => tab.key === currentTabKey)
+      ) {
+        // If it is already in the tabs, make sure it's the active tab
+        tabsStore.setActiveTab(currentTabKey);
+      }
+
+      // Always push the active tab's route (from restored tabs)
+      const activeTab = tabsStore.tabs.find(tab => tab.key === tabsStore.activeTabKey);
+      if (
+        activeTab &&
+        activeTab.route &&
+        (router.currentRoute.value.fullPath !== router.resolve(activeTab.route).fullPath)
+      ) {
+        router.push(activeTab.route);
+      } else if (role === 'doctor') {
         router.push('/dashboard');
       } else if (role === 'receptionist') {
         router.push('/appointments');

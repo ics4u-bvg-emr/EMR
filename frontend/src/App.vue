@@ -6,7 +6,7 @@
     <Sidebar :items="filteredSidebarItems" :user="user" />
     <div class="main-content">
       <TabBar />
-      <router-view :key="activeTab?.key" />
+      <router-view :key="tabsStore.activeTabKey" />
     </div>
   </div>
 </template>
@@ -69,10 +69,40 @@ const publicRoutes = [
 
 const isPublicRoute = computed(() => publicRoutes.includes(route.name))
 
-// You may want to fetch the real user info here as you already do in your onMounted
-
 onMounted(() => {
   tabsStore.restoreTabs()
+
+  const currentRoute = router.currentRoute.value
+  const isPatientTab = currentRoute.name === 'PatientEdit' && currentRoute.params.id
+  const currentTabKey = isPatientTab ? `patient-${currentRoute.params.id}` : null
+
+  if (
+    isPatientTab &&
+    !tabsStore.tabs.find(tab => tab.key === currentTabKey)
+  ) {
+    tabsStore.openTab({
+      key: currentTabKey,
+      title: `Patient ${currentRoute.params.id}`,
+      route: { name: 'PatientEdit', params: { id: currentRoute.params.id } },
+      closeable: true
+    })
+    tabsStore.setActiveTab(currentTabKey)
+  } else if (
+    isPatientTab &&
+    tabsStore.tabs.find(tab => tab.key === currentTabKey)
+  ) {
+    tabsStore.setActiveTab(currentTabKey)
+  }
+
+  // Always push the active tab's route (from restored tabs)
+  const activeTab = tabsStore.tabs.find(tab => tab.key === tabsStore.activeTabKey)
+  if (
+    activeTab &&
+    activeTab.route &&
+    (router.currentRoute.value.fullPath !== router.resolve(activeTab.route).fullPath)
+  ) {
+    router.push(activeTab.route)
+  }
 })
 </script>
 

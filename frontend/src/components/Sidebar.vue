@@ -59,11 +59,13 @@ const tabsStore = useTabsStore()
 const router = useRouter()
 
 function handleSidebarClick(item) {
-  // Always update the default tab (key: 'home')
+  if (item.key === 'home' || item.label === 'Home') {
+    tabsStore.setDefaultTabLastRoute(item.route)
+  }
   tabsStore.openTab({
     key: 'home',
     title: item.label,
-    route: item.route, // Should be a route object, e.g. { name: 'Dashboard' }
+    route: item.route,
     closeable: false
   })
   router.push(item.route)

@@ -75,7 +75,7 @@ const toISO = (dateStr) => {
 
 // const fetchAppointments = async () => {
 //     try {
-//     let url = 'http://localhost:3000/api/appointments';
+//     let url = 'https://emr-backend-h03z.onrender.com/api/appointments';
 
 //     if (isDoctor && doctorId) {
 //       url += `?doctorId=${doctorId}`;
@@ -83,7 +83,7 @@ const toISO = (dateStr) => {
 
 //     const res = await axios.get(url);
 
-//     const dres = await axios.get(`http://localhost:3000/api/doctors/${id}`, {
+//     const dres = await axios.get(`https://emr-backend-h03z.onrender.com/api/doctors/${id}`, {
 //       headers: {authorization: `Bearer ${token}`}
 //     })
 //     const data = dres.data
@@ -127,7 +127,7 @@ const toISO = (dateStr) => {
 
 const fetchAppointments = async () => {
   try {
-    let url = 'http://localhost:3000/api/appointments';
+    let url = 'https://emr-backend-h03z.onrender.com/api/appointments';
 
     const res = await axios.get(url);
 

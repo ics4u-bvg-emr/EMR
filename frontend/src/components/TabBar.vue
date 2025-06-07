@@ -40,7 +40,11 @@ function close(key) {
 }
 function activate(tab) {
   tabsStore.setActiveTab(tab.key)
-  router.push(tab.route)
+  if (tab.key === 'home') {
+    router.push(tabsStore.defaultTabLastRoute)
+  } else {
+    router.push(tab.route)
+  }
 }
 </script>
 

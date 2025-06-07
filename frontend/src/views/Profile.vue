@@ -172,6 +172,7 @@ import { ref, reactive, onMounted } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
 import { setUserRole } from '@/stores/user.js';
+import { useTabsStore } from '@/stores/tabs'
 
 const router = useRouter();
 const isEditing = ref(false);
@@ -233,6 +234,9 @@ onMounted(async () => {
     console.error('Failed to load profile:', err);
     router.push('/login');
   }
+
+  const tabsStore = useTabsStore()
+  // tabsStore.clearTabDataForCurrentUser()
 });
 
 async function onImageChange(event) {
@@ -304,9 +308,13 @@ async function saveProfile() {
 
 
 function logout() {
-  localStorage.removeItem('token');
-  setUserRole(null);
-  router.push('/login');
+  const tabsStore = useTabsStore()
+  tabsStore.resetTabs() // clear in-memory state only
+  localStorage.removeItem('username')
+  localStorage.removeItem('userId')
+  localStorage.removeItem('token')
+  setUserRole(null)
+  router.push('/login')
 }
 </script>
 

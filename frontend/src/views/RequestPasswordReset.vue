@@ -32,7 +32,7 @@
   <script setup>
   import { ref } from 'vue';
   import axios from 'axios';
-  axios.defaults.baseURL = "http://localhost:3000"
+  axios.defaults.baseURL = "https://emr-backend-h03z.onrender.com"
 
   const email = ref('');
   const loading = ref(false);

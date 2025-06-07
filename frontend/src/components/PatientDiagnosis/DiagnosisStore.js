@@ -58,7 +58,7 @@ export const useDiagnosisStore = defineStore('diagnosis', {
     },
     async saveDraft() {
         try {
-            const response = await axios.post(`http://localhost:3000/api/patients/${this.patientId}/diagnosis`, {
+            const response = await axios.post(`https://emr-backend-h03z.onrender.com/api/patients/${this.patientId}/diagnosis`, {
                 ...this.diagnosis,
                 status: 'draft',
                 doctorId: '6838adf12a17b3053d853cf7' // Get this from auth or user store
@@ -71,7 +71,7 @@ export const useDiagnosisStore = defineStore('diagnosis', {
     },
     async completeDiagnosis() {
         try {
-            const response = await axios.post(`http://localhost:3000/api/patients/${this.patientId}/diagnosis`, {
+            const response = await axios.post(`https://emr-backend-h03z.onrender.com/api/patients/${this.patientId}/diagnosis`, {
                 ...this.diagnosis,
                 status: 'completed',
                 doctorId: '6838adf12a17b3053d853cf7' // Change this
@@ -84,7 +84,7 @@ export const useDiagnosisStore = defineStore('diagnosis', {
     },
     async loadDiagnosis() {
         try {
-            const response = await axios.get(`http://localhost:3000/api/patients/${this.patientId}/diagnosis`);
+            const response = await axios.get(`https://emr-backend-h03z.onrender.com/api/patients/${this.patientId}/diagnosis`);
             if (response.data) {
                 this.diagnosis = response.data;
                 // Convert prescription if stored as string
@@ -100,7 +100,7 @@ export const useDiagnosisStore = defineStore('diagnosis', {
     },
     async fetchDoctorDrafts(doctorId) {
       try {
-        const response = await axios.get(`http://localhost:3000/api/doctors/${doctorId}/diagnosis/drafts`)
+        const response = await axios.get(`https://emr-backend-h03z.onrender.com/api/doctors/${doctorId}/diagnosis/drafts`)
         this.draftDiagnoses = response.data || []
         return response.data
       } catch (error) {
@@ -111,7 +111,7 @@ export const useDiagnosisStore = defineStore('diagnosis', {
     },
     async loadDraft(patientId) {
         try {
-        const response = await axios.get(`http://localhost:3000/api/patients/${patientId}/diagnosis`);
+        const response = await axios.get(`https://emr-backend-h03z.onrender.com/api/patients/${patientId}/diagnosis`);
         if (response.data) {
             this.diagnosis = response.data;
             this.patientId = patientId;

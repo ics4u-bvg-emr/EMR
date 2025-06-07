@@ -103,14 +103,22 @@ router.beforeEach((to, from, next) => {
 
 router.afterEach(async (to, from) => {
   const tabsStore = useTabsStore()
+  // Save default tab route if needed
+  if (tabsStore.activeTabKey === 'home') {
+    tabsStore.setDefaultTabLastRoute({
+      name: to.name,
+      path: to.path,
+      params: to.params,
+      query: to.query
+    })
+  }
   // Open a patient tab if route is PatientEdit
   if (to.name === 'PatientEdit' && to.params.id) {
     const patientId = to.params.id
-    // Check if the tab already exists
     const tabKey = `patient-${patientId}`
     const existingTab = tabsStore.tabs.find(tab => tab.key === tabKey)
     if (!existingTab) {
-      // Fetch patient name from API
+      // Fetch patient name from API for tab title
       let title = `Patient ${patientId}`
       try {
         const res = await axios.get(`/api/patients/${patientId}`)
@@ -128,8 +136,8 @@ router.afterEach(async (to, from) => {
         closeable: true
       })
     }
+    // Do NOT reset/replace tabsStore.tabs here!
   }
-  // Add similar logic for other tabbed views if needed
 })
 
 export default router
