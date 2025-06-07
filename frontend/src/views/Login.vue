@@ -62,7 +62,7 @@ import axios from 'axios';
 import { setUserRole } from '@/stores/user.js'
 import { useTabsStore } from '@/stores/tabs'
 
-axios.defaults.baseURL = 'http://localhost:3000'
+axios.defaults.baseURL = 'https://emr-backend-h03z.onrender.com'
 
 const router = useRouter();
 const username = ref('');

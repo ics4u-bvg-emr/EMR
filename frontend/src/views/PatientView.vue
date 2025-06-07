@@ -267,7 +267,7 @@ const fetchPatient = async () => {
   try {
     const token = localStorage.getItem('token')
     const response = await axios.get(
-      `http://localhost:3000/api/patients/${patientId.value}`,
+      `https://emr-backend-h03z.onrender.com/api/patients/${patientId.value}`,
       {
         headers: { Authorization: `Bearer ${token}` }
       }
@@ -293,7 +293,7 @@ const fetchAppointments = async () => {
   try {
     const token = localStorage.getItem('token')
     const { data } = await axios.get(
-      `http://localhost:3000/api/appointments?patientId=${patientId.value}`,
+      `https://emr-backend-h03z.onrender.com/api/appointments?patientId=${patientId.value}`,
       {
         headers: { Authorization: `Bearer ${token}` }
       }
@@ -310,9 +310,9 @@ const fetchAppointments = async () => {
 const savePatient = async () => {
   try {
     if (patientId) {
-      await axios.put(`http://localhost:3000/api/patients/${patientId}`, patient.value)
+      await axios.put(`https://emr-backend-h03z.onrender.com/api/patients/${patientId}`, patient.value)
     } else {
-      const response = await axios.post('http://localhost:3000/api/patients', patient.value)
+      const response = await axios.post('https://emr-backend-h03z.onrender.com/api/patients', patient.value)
       router.push(`/patients/${response.data._id}`)
     }
     alert('Patient saved successfully!')

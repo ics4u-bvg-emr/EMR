@@ -45,7 +45,7 @@
   import { ref } from 'vue';
   import { useRoute, useRouter } from 'vue-router';
   import axios from 'axios';
-  axios.defaults.baseURL = "http://localhost:3000"
+  axios.defaults.baseURL = "https://emr-backend-h03z.onrender.com"
 
 
   const route = useRoute();

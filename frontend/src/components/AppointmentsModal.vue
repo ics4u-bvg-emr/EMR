@@ -115,7 +115,7 @@
         }
 
         try {
-            const res = await axios.post('http://localhost:3000/api/appointments', {
+            const res = await axios.post('https://emr-backend-h03z.onrender.com/api/appointments', {
                 doctorId: selectedDoctor.value,
                 patientId: selectedPatient.value,
                 start: new Date(start.value).toISOString(),
@@ -134,7 +134,7 @@
 
     const updateAppt = async () => {
       try {
-        const res = await axios.put(`http://localhost:3000/api/appointments/${props.event.id}`, {
+        const res = await axios.put(`https://emr-backend-h03z.onrender.com/api/appointments/${props.event.id}`, {
           start: new Date(start.value).toISOString(),
           end: new Date(end.value).toISOString(),
           reason: reason.value.trim(),
@@ -154,7 +154,7 @@
       if (!confirmDelete) return;
 
       try {
-        await axios.delete(`http://localhost:3000/api/appointments/${props.event.id}`);
+        await axios.delete(`https://emr-backend-h03z.onrender.com/api/appointments/${props.event.id}`);
         emit('submitted');
         emit('close');
       } catch (err) {
@@ -199,13 +199,13 @@
 
     onMounted(async () => {
         try {
-            const patientRes = await axios.get('http://localhost:3000/api/patients');
+            const patientRes = await axios.get('https://emr-backend-h03z.onrender.com/api/patients');
             patients.value = patientRes.data.map(p => ({
                 id: p._id,
                 name: `${p.firstName} ${p.lastName}`,
             }));
 
-            const doctorRes = await axios.get('http://localhost:3000/api/doctors');
+            const doctorRes = await axios.get('https://emr-backend-h03z.onrender.com/api/doctors');
             doctors.value = doctorRes.data.map(d => ({
                 id: d._id,
                 name: `${d.firstName} ${d.lastName}`,

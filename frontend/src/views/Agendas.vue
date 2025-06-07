@@ -77,10 +77,10 @@ const fetchData = async () => {
     const token = localStorage.getItem('token')
 
     const [doctorsRes, apptRes] = await Promise.all([
-      axios.get('http://localhost:3000/api/doctors', {
+      axios.get('https://emr-backend-h03z.onrender.com/api/doctors', {
         headers: { Authorization: `Bearer ${token}` }
       }),
-      axios.get('http://localhost:3000/api/appointments', {
+      axios.get('https://emr-backend-h03z.onrender.com/api/appointments', {
         headers: { Authorization: `Bearer ${token}` }
       })
     ])
