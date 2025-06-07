@@ -56,113 +56,109 @@
   </template>
 
   <script setup>
-  import { ref, onMounted } from 'vue';
-  import { useRouter } from 'vue-router';
-  import axios from 'axios';
-  import { setUserRole } from '@/stores/user.js'
-  import { useTabsStore } from '@/stores/tabs'
+import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import axios from 'axios';
+import { setUserRole } from '@/stores/user.js'
+import { useTabsStore } from '@/stores/tabs'
 
-  axios.defaults.baseURL = 'https://emr-backend-h03z.onrender.com'
+axios.defaults.baseURL = 'http://localhost:3000'
 
-  const router = useRouter();
-  const username = ref('');
-  const password = ref('');
-  const usernameError = ref('');
-  const passwordError = ref('');
-  const loginAttempts = ref(parseInt(localStorage.getItem('loginAttempts')) || 0);
-  const showRecoveryPrompt = ref(loginAttempts.value >= 3);
-  const tabsStore = useTabsStore()
+const router = useRouter();
+const username = ref('');
+const password = ref('');
+const usernameError = ref('');
+const passwordError = ref('');
+const loginAttempts = ref(parseInt(localStorage.getItem('loginAttempts')) || 0);
+const showRecoveryPrompt = ref(loginAttempts.value >= 3);
+const tabsStore = useTabsStore();
 
-  const handleLogin = async () => {
-    try {
-      console.log(`🔐 Logging in as: ${username.value}`);
+const handleLogin = async () => {
+  try {
+    console.log(`🔐 Logging in as: ${username.value}`);
 
-      const response = await axios.post('/api/auth/login', {
-        username: username.value.trim(),
-        password: password.value.trim()
-      });
+    const response = await axios.post('/api/auth/login', {
+      username: username.value.trim(),
+      password: password.value.trim()
+    });
 
-      console.log('✅ Login success:', response.data);
+    console.log('✅ Login success:', response.data);
 
-      // Rename destructured fields to avoid conflict with refs
-      const { token, role, user, username: respUsername, id: respId, doctorId } = response.data;
+    const { token, role, user, username: respUsername, id: respId, doctorId } = response.data;
 
-      if (!token || !role) {
-        throw new Error('Login failed: missing token or role.');
-      }
+    if (!token || !role) throw new Error('Login failed: missing token or role.');
 
-      // Defensive: use user.username or respUsername, user.id or respId
-      const usernameToStore = user?.username || respUsername || username.value.trim();
-      const userIdToStore = user?.id || respId || '';
+    const usernameToStore = user?.username || respUsername || username.value.trim();
+    const userIdToStore = user?.id || respId || '';
 
-      localStorage.setItem('token', token);
-      localStorage.setItem('role', role);
-      localStorage.setItem('username', usernameToStore);
-      localStorage.setItem('userId', userIdToStore);
-      localStorage.setItem('loginAttempts', '0');
+    localStorage.setItem('token', token);
+    localStorage.setItem('role', role);
+    localStorage.setItem('username', usernameToStore);
+    localStorage.setItem('userId', userIdToStore);
+    localStorage.setItem('loginAttempts', '0');
 
-      if (role === 'doctor') {
-        localStorage.setItem('doctorId', user?.doctorId || doctorId || '');
-      } else {
-        localStorage.removeItem('doctorId');
-      }
-
-      setUserRole(role);
-
-      tabsStore.restoreTabs();
-
-      const currentRoute = router.currentRoute.value;
-      const isPatientTab = currentRoute.name === 'PatientEdit' && currentRoute.params.id;
-      const currentTabKey = isPatientTab ? `patient-${currentRoute.params.id}` : null;
-
-      // If the current route is a patient tab and it's not in the restored tabs, add it
-      if (
-        isPatientTab &&
-        !tabsStore.tabs.find(tab => tab.key === currentTabKey)
-      ) {
-        tabsStore.openTab({
-          key: currentTabKey,
-          title: `Patient ${currentRoute.params.id}`,
-          route: { name: 'PatientEdit', params: { id: currentRoute.params.id } },
-          closeable: true
-        });
-        tabsStore.setActiveTab(currentTabKey);
-      } else if (
-        isPatientTab &&
-        tabsStore.tabs.find(tab => tab.key === currentTabKey)
-      ) {
-        // If it is already in the tabs, make sure it's the active tab
-        tabsStore.setActiveTab(currentTabKey);
-      }
-
-      // Always push the active tab's route (from restored tabs)
-      const activeTab = tabsStore.tabs.find(tab => tab.key === tabsStore.activeTabKey);
-      if (
-        activeTab &&
-        activeTab.route &&
-        (router.currentRoute.value.fullPath !== router.resolve(activeTab.route).fullPath)
-      ) {
-        router.push(activeTab.route);
-      } else if (role === 'doctor') {
-        router.push('/dashboard');
-      } else if (role === 'receptionist') {
-        router.push('/appointments');
-      }
-    } catch (err) {
-      console.error('❌ Login failed:', err.response?.data || err.message);
-
-      loginAttempts.value++;
-      localStorage.setItem('loginAttempts', loginAttempts.value);
-      passwordError.value = 'Invalid credentials. Please try again.';
-
-      if (loginAttempts.value >= 3) {
-        showRecoveryPrompt.value = true;
-      }
+    if (role === 'doctor') {
+      localStorage.setItem('doctorId', user?.doctorId || doctorId || '');
+    } else {
+      localStorage.removeItem('doctorId');
     }
-  };
 
-  onMounted(() => {
-    loginAttempts.value = parseInt(localStorage.getItem('loginAttempts')) || 0;
-    showRecoveryPrompt.value = loginAttempts.value >= 3;
-  });
-  </script>
+    setUserRole(role);
+
+    // Fresh session: clear old doctor tabs if needed
+    tabsStore.resetTabs();
+    tabsStore.restoreTabs();
+
+    const currentRoute = router.currentRoute.value;
+    const isPatientTab = currentRoute.name === 'PatientEdit' && currentRoute.params.id;
+    const currentTabKey = isPatientTab ? `patient-${currentRoute.params.id}` : null;
+
+    if (isPatientTab && !tabsStore.tabs.find(tab => tab.key === currentTabKey)) {
+      tabsStore.openTab({
+        key: currentTabKey,
+        title: `Patient ${currentRoute.params.id}`,
+        route: { name: 'PatientEdit', params: { id: currentRoute.params.id } },
+        closeable: true
+      });
+      tabsStore.setActiveTab(currentTabKey);
+    } else if (isPatientTab) {
+      tabsStore.setActiveTab(currentTabKey);
+    }
+
+    const activeTab = tabsStore.tabs.find(tab => tab.key === tabsStore.activeTabKey);
+    const activeRoute = activeTab?.route || {};
+    const resolvedRoute = router.resolve(activeRoute);
+    const allowedRoles = resolvedRoute.meta?.role;
+    const isAllowed = !allowedRoles || (
+      Array.isArray(allowedRoles)
+        ? allowedRoles.includes(role)
+        : allowedRoles === role
+    );
+
+    if (activeTab && isAllowed) {
+      router.push(activeTab.route);
+    } else if (role === 'doctor') {
+      router.push('/dashboard');
+    } else if (role === 'receptionist') {
+      router.push('/appointments');
+    } else {
+      router.push('/profile');
+    }
+
+  } catch (err) {
+    console.error('❌ Login failed:', err.response?.data || err.message);
+    loginAttempts.value++;
+    localStorage.setItem('loginAttempts', loginAttempts.value);
+    passwordError.value = 'Invalid credentials. Please try again.';
+    if (loginAttempts.value >= 3) {
+      showRecoveryPrompt.value = true;
+    }
+  }
+};
+
+onMounted(() => {
+  loginAttempts.value = parseInt(localStorage.getItem('loginAttempts')) || 0;
+  showRecoveryPrompt.value = loginAttempts.value >= 3;
+});
+</script>
+

@@ -70,8 +70,8 @@ const fetchData = async () => {
   loading.value = true
   try {
     const [doctorsRes, apptRes] = await Promise.all([
-      fetch('https://emr-backend-h03z.onrender.com/api/doctors'),
-      fetch('https://emr-backend-h03z.onrender.com/api/appointments')
+      fetch('http://localhost:3000/api/doctors'),
+      fetch('http://localhost:3000/api/appointments')
     ])
     if (!doctorsRes.ok || !apptRes.ok) throw new Error('Failed to fetch data')
 

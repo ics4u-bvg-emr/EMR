@@ -75,7 +75,7 @@ const toISO = (dateStr) => {
 
 // const fetchAppointments = async () => {
 //     try {
-//     let url = 'https://emr-backend-h03z.onrender.com/api/appointments';
+//     let url = 'http://localhost:3000/api/appointments';
 
 //     if (isDoctor && doctorId) {
 //       url += `?doctorId=${doctorId}`;
@@ -83,7 +83,7 @@ const toISO = (dateStr) => {
 
 //     const res = await axios.get(url);
 
-//     const dres = await axios.get(`https://emr-backend-h03z.onrender.com/api/doctors/${id}`, {
+//     const dres = await axios.get(`http://localhost:3000/api/doctors/${id}`, {
 //       headers: {authorization: `Bearer ${token}`}
 //     })
 //     const data = dres.data
@@ -127,9 +127,14 @@ const toISO = (dateStr) => {
 
 const fetchAppointments = async () => {
   try {
-    let url = 'https://emr-backend-h03z.onrender.com/api/appointments';
+    const token = localStorage.getItem('token');
+    const url = 'http://localhost:3000/api/appointments';
 
-    const res = await axios.get(url);
+    const res = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
 
     const validEvents = res.data
       .filter((appt) => {
@@ -172,6 +177,7 @@ const fetchAppointments = async () => {
     console.error('Failed to fetch appointments:', err);
   }
 };
+
 
 
 const handleSubmitted = async () => {
