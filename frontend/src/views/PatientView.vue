@@ -52,7 +52,13 @@
               </div>
               <div v-if="editing.basic">
                 <div class="field"><label class="label">Sex</label><input v-model="patient.sex" class="input" /></div>
-                <div class="field"><label class="label">Date of Birth</label><input v-model="patient.dateOfBirth" class="input" type="date" /></div>
+                <input
+                  class="input"
+                  type="date"
+                  :value="patient.dateOfBirth?.substring(0, 10)"
+                  @input="patient.dateOfBirth = $event.target.value"
+                />
+
                 <div class="field"><label class="label">Height (cm)</label><input v-model="patient.height" class="input" type="number" /></div>
                 <div class="field"><label class="label">Weight (kg)</label><input v-model="patient.weight" class="input" type="number" /></div>
               </div>
@@ -309,18 +315,44 @@ const fetchAppointments = async () => {
 // Save patient data
 const savePatient = async () => {
   try {
-    if (patientId) {
-      await axios.put(`https://emr-backend-h03z.onrender.com/api/patients/${patientId}`, patient.value)
+    // Ensure all nested fields exist
+    patient.value.contactInfo ??= { phoneNumber: '', email: '', address: '' }
+    patient.value.medicalHistory ??= {
+      pastConditions: [],
+      currentPrescriptions: [],
+      familyHistory: [],
+      notes: ''
+    }
+
+    // Normalize DOB before saving
+    if (patient.value.dateOfBirth) {
+      patient.value.dateOfBirth = dayjs(patient.value.dateOfBirth).format('YYYY-MM-DD')
+    }
+
+    const token = localStorage.getItem('token')
+
+    if (patientId.value) {
+      await axios.put(
+        `https://emr-backend-h03z.onrender.com/api/patients/${patientId.value}`,
+        patient.value,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
     } else {
-      const response = await axios.post('https://emr-backend-h03z.onrender.com/api/patients', patient.value)
+      const response = await axios.post(
+        'https://emr-backend-h03z.onrender.com/api/patients',
+        patient.value,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
       router.push(`/patients/${response.data._id}`)
     }
+
     alert('Patient saved successfully!')
   } catch (error) {
     console.error('Error saving patient:', error)
     alert('Failed to save patient')
   }
 }
+
 
 // Load patient data when component mounts
 onMounted(() => {
