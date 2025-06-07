@@ -12,10 +12,7 @@
               <i class="fas fa-heart fa-2x"></i>
             </span>
             <div>
-              <h2 class="title is-4 mb-1">Welcome, Doctor</h2>
-              <p class="subtitle is-6 mb-0">
-                You have <b>{{ newMessages }}</b> new messages and <b>{{ newNotifications }}</b> notifications
-              </p>
+              <h2 class="title is-4 mb-1">Welcome, Dr. {{ doctorName }}</h2>
             </div>
           </div>
         </div>
@@ -60,7 +57,7 @@
         </div>
         <div class="column is-5">
           <div class="box">
-            <p class="title is-6 mb-3">News & Updates</p>
+            <p class="title is-6 mb-3">At a glance</p>
             <ul class="mb-3" style="list-style: disc inside;">
               <li v-for="note in notifications" :key="note">{{ note }}</li>
             </ul>
@@ -84,11 +81,15 @@
         </div>
         <div class="column is-5">
           <div class="box">
-            <p class="title is-6 mb-3">At a Glance</p>
+            <p class="title is-6 mb-3">News & Updates</p>
             <ul>
-              <li>Pending Patient Intakes <b>{{ pendingIntakes }}</b></li>
-              <li>Incomplete Patient Records <b>{{ incompleteRecords }}</b></li>
-              <li>Fax Alerts <b>{{ faxAlerts }}</b></li>
+              <li v-for="update in recentUpdates" :key="update.id">
+                <strong>{{ update.patientName }}</strong> – 
+                <em>{{ update.updateName }}</em>
+                <span class="has-text-grey ml-2">
+                  ({{ new Date(update.updatedAt).toLocaleDateString() }})
+                </span>
+              </li>
             </ul>
             <router-link class="is-size-7" to="/patients">View all</router-link>
           </div>
@@ -101,6 +102,15 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
+import { usePatientUpdates } from '@/composables/usePatientUpdates'
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+const doctorName = ref('Doctor')
+const patients = ref([])
+const medicalRecords = ref([])
+
+const { recentUpdates } = usePatientUpdates(patients, medicalRecords)
 
 const now = ref(new Date())
 const appointments = ref([])
@@ -108,14 +118,7 @@ const totalPatients = ref(0)
 const newPatients = ref(0)
 const newMessages = ref(0)
 const newNotifications = ref(0)
-const notifications = ref([
-  'X-ray result ready',
-  'Allergy update received',
-  'Insurance form approved'
-])
-const pendingIntakes = ref(12)
-const incompleteRecords = ref(3)
-const faxAlerts = ref(18)
+const notifications = ref([])
 
 const formattedDate = computed(() =>
   now.value.toLocaleDateString(undefined, {
@@ -126,35 +129,82 @@ const formattedDate = computed(() =>
   })
 )
 
-const todaysAppointments = computed(() => {
-  return appointments.value.filter(appt => {
+const todaysAppointments = computed(() =>
+  appointments.value.filter(appt => {
     const date = new Date(appt.start)
     return date.toDateString() === now.value.toDateString()
   })
-})
+)
 
 onMounted(async () => {
   const token = localStorage.getItem('token')
-  console.log("Token:", token)
-  const [apptRes, patientRes] = await Promise.all([
+
+  if (!token) {
+    router.push('/login')
+    return
+  }
+
+  let decoded
+  try {
+    decoded = JSON.parse(atob(token.split('.')[1]))
+  } catch {
+    router.push('/login')
+    return
+  }
+
+  const { id, role } = decoded
+  if (!id || role !== 'doctor') {
+    router.push('/login')
+    return
+  }
+
+  try {
+    const res = await axios.get(`/api/doctors/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    const data = res.data
+    doctorName.value = `${data.firstName} ${data.lastName}`
+  } catch (err) {
+    console.error('Failed to fetch doctor:', err)
+  }
+
+  const [apptRes, patientRes, recordsRes] = await Promise.all([
     axios.get('/api/appointments/my', { headers: { Authorization: `Bearer ${token}` } }),
-    axios.get('/api/patients', { headers: { Authorization: `Bearer ${token}` } })
+    axios.get('/api/patients', { headers: { Authorization: `Bearer ${token}` } }),
+    axios.get('/api/medical-records', { headers: { Authorization: `Bearer ${token}` } })
   ])
 
   appointments.value = Array.isArray(apptRes.data) ? apptRes.data : []
-  totalPatients.value = Array.isArray(patientRes.data) ? patientRes.data.length : 0
-  console.log("appointments:", apptRes.data)
-  console.log("patients:", patientRes.data)
+  patients.value = Array.isArray(patientRes.data) ? patientRes.data : []
+  medicalRecords.value = Array.isArray(recordsRes.data) ? recordsRes.data : []
 
-  newPatients.value = Array.isArray(patientRes.data)
-  ? patientRes.data.filter(p => {
-      const created = new Date(p.createdAt)
-      const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-      return created > oneWeekAgo
-    }).length
-  : 0
+  totalPatients.value = patients.value.length
+
+  newPatients.value = patients.value.filter(p => {
+    const created = new Date(p.createdAt)
+    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    return created > oneWeekAgo
+  }).length
 
   newMessages.value = 11
+
+  const todayCount = todaysAppointments.value.length
+  const updateCount = recentUpdates.value.length
+
+  if (todayCount >= 6) {
+    notifications.value.push(`Busy day: ${todayCount} appointments scheduled`)
+  } else if (todayCount >= 3) {
+    notifications.value.push(`Moderate day: ${todayCount} appointments`)
+  } else if (todayCount > 0) {
+    notifications.value.push(`Calm day: just ${todayCount} appointment(s)`)
+  } else {
+    notifications.value.push('No appointments today')
+  }
+
+  if (updateCount > 0) {
+    notifications.value.push(`${updateCount} recent medical update${updateCount > 1 ? 's' : ''} logged`)
+  }
+
   newNotifications.value = notifications.value.length
 })
 </script>
@@ -168,7 +218,6 @@ onMounted(async () => {
   font-weight: 400;
 }
 
-/* Dashboard top bar */
 .dashboard-header {
   display: flex;
   align-items: center;

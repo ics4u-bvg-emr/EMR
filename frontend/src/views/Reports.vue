@@ -41,11 +41,7 @@
         No updates available.
       </div>
 
-      <div
-        v-for="update in filteredUpdates"
-        :key="update.id"
-        class="box mb-3"
-      >
+      <div v-for="update in filteredUpdates" :key="update.id" class="box mb-3">
         <article class="media">
           <div class="media-content">
             <div class="content">
@@ -66,11 +62,14 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { usePatientUpdates } from '@/composables/usePatientUpdates'
 
 const patients = ref([])
 const medicalRecords = ref([])
+
 const loading = ref(true)
 const error = ref(null)
+
 const patientSearch = ref('')
 const selectedPatientId = ref(null)
 const filteredUpdates = ref([])
@@ -80,7 +79,7 @@ const selectedPatientName = computed(() => {
   return patient ? `${patient.firstName} ${patient.lastName}` : ''
 })
 
-const updates = computed(() => buildUpdatesList())
+const { updates } = usePatientUpdates(patients, medicalRecords)
 
 watch(updates, filterUpdates, { immediate: true })
 
@@ -108,85 +107,9 @@ async function fetchData() {
   }
 }
 
-function buildUpdatesList() {
-  const updatesArr = []
-
-  patients.value.forEach(patient => {
-    const updatedAt = patient.updatedAt ? new Date(patient.updatedAt) : new Date()
-    const patientName = `${patient.firstName} ${patient.lastName}`
-
-    if (patient.medicalHistory?.allergies?.length) {
-      updatesArr.push({
-        id: `patient-allergies-${patient._id}`,
-        patientId: patient._id,
-        patientName,
-        updatedAt,
-        type: 'Patient Info',
-        updateName: 'Updated Allergies',
-        details: `Allergies: ${patient.medicalHistory.allergies.join(', ')}`,
-      })
-    }
-
-    if (patient.weight !== undefined && patient.weight !== null) {
-      updatesArr.push({
-        id: `patient-weight-${patient._id}`,
-        patientId: patient._id,
-        patientName,
-        updatedAt,
-        type: 'Patient Info',
-        updateName: 'Updated Weight',
-        details: `Weight: ${patient.weight} kg`,
-      })
-    }
-
-    if (patient.height !== undefined && patient.height !== null) {
-      updatesArr.push({
-        id: `patient-height-${patient._id}`,
-        patientId: patient._id,
-        patientName,
-        updatedAt,
-        type: 'Patient Info',
-        updateName: 'Updated Height',
-        details: `Height: ${patient.height} cm`,
-      })
-    }
-  })
-
-  medicalRecords.value.forEach(record => {
-    const updatedAt = record.updatedAt ? new Date(record.updatedAt) : new Date(record.date)
-    updatesArr.push({
-      id: `record-${record._id}`,
-      patientId: record.patientId,
-      patientName: getPatientName(record.patientId),
-      updatedAt,
-      type: 'Medical Record',
-      updateName: record.updateName || record.title || 'Medical Update',
-      details: record.description || '',
-    })
-  })
-
-  return updatesArr.sort((a, b) => b.updatedAt - a.updatedAt)
-}
-
-function getPatientName(patientId) {
-  const patient = patients.value.find(p => p._id === patientId)
-  return patient ? `${patient.firstName} ${patient.lastName}` : 'Unknown Patient'
-}
-
-function formatDate(date) {
-  if (!(date instanceof Date)) date = new Date(date)
-  return date.toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
-
 function handlePatientSelection() {
   const selected = patients.value.find(
-    p => `${p.firstName} ${p.lastName}` === patientSearch.value.trim()
+    p => `${p.firstName} ${p.lastName}`.trim().toLowerCase() === patientSearch.value.trim().toLowerCase()
   )
   if (selected) {
     selectedPatientId.value = selected._id
@@ -209,6 +132,18 @@ function filterUpdates() {
   filteredUpdates.value = updates.value.filter(
     update => update.patientId === selectedPatientId.value
   )
+}
+
+function formatDate(date) {
+  if (!date) return ''
+  const d = new Date(date)
+  return d.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 
 onMounted(fetchData)
