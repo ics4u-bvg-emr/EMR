@@ -1,6 +1,6 @@
 <template>
-  <section class="updates-center section">
-    <h2 class="title is-3 has-text-dark mb-4">Patient Updates</h2>
+  <section class="home-screen">
+    <h2>Patient Updates</h2>
 
     <!-- Filter Input -->
     <div class="field mb-4">
@@ -150,6 +150,18 @@ onMounted(fetchData)
 </script>
 
 <style scoped>
+.home-screen {
+  padding: 2rem;
+  font-family: 'Geist Sans', sans-serif;
+}
+.home-screen h2 {
+  margin-bottom: 1rem;
+  font-size: 2.5rem;  /* Larger font size */
+  font-weight: bold;  /* Make it bold */
+  border-bottom: 2px solid #2b2e3b;  /* Add a line underneath */
+  padding-bottom: 0.5rem;  /* Space between text and line */
+}
+
 .updates-center {
   max-width: 900px;
   margin: auto;

@@ -34,10 +34,12 @@ const tabsStore = useTabsStore()
 const sidebarItems = [
   { svg: homeSvg, label: 'Home', route: '/dashboard', roles: ['doctor'] },
   { svg: fileSvg, label: 'Patients', route: '/patients', roles: ['doctor'] },
+  { svg: fileSvg, label: 'Drafts', route: '/diagnosis/drafts', roles: ['doctor'] },
   { svg: fileSvg, label: 'Agendas', route: '/agendas', roles: ['receptionist'] },
+  { svg: fileSvg, label: 'Create Patient', route: '/create-patient', roles: ['receptionist'] },
   { svg: calendarSvg, label: 'Appointments', route: '/appointments', roles: ['doctor', 'receptionist'] },
   { svg: graphSvg, label: 'Reports', route: '/reports', roles: ['doctor'] },
-  { svg: gearSvg, label: 'Settings', route: '/settings', roles: ['doctor', 'receptionist'] },
+  // { svg: gearSvg, label: 'Settings', route: '/settings', roles: ['doctor', 'receptionist'] },
 ]
 
 const user = ref({

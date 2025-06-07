@@ -23,7 +23,8 @@ const patientSchema = new mongoose.Schema({
     weight: { type: Number },
     height: { type: Number },
     allergies: { type: [String], default: [] },
-    medicalHistory: medicalHistorySchema
+    medicalHistory: medicalHistorySchema,
+    profilePicture: { type: String } // base64 string
 });
 
 const Patient = mongoose.model('Patient', patientSchema);

@@ -17,6 +17,7 @@ import RegisterDoctor from '@/views/RegisterDoctor.vue'
 import RegisterReceptionist from '@/views/RegisterReceptionist.vue'
 import RequestPasswordReset from '@/views/RequestPasswordReset.vue'
 import ResetPassword from '@/views/ResetPassword.vue'
+import CreatePatient from '@/views/CreatePatient.vue'
 import { useTabsStore } from '@/stores/tabs'
 
 const routes = [
@@ -46,8 +47,9 @@ const routes = [
   { path: '/request-password-reset', name: 'RequestPasswordReset', component: RequestPasswordReset },
   { path: '/reset-password/:token', name: 'ResetPassword', component: ResetPassword },
   { path: '/dashboard', name: 'Dashboard', component: Home, meta: { requiresAuth: true, role: 'doctor' } },
-  { path: '/settings', name: 'Settings', component: Settings, meta: { requiresAuth: true, role: ['doctor','receptionist'] } },
+  // { path: '/settings', name: 'Settings', component: Settings, meta: { requiresAuth: true, role: ['doctor','receptionist'] } },
   { path: '/agendas', name: 'Agendas', component: Agendas, meta: { requiresAuth: true, role: ['receptionist'] } },
+  { path: '/create-patient', name: 'CreatePatient', component: CreatePatient, meta: { requiresAuth: true, role: ['receptionist'] } },
   { path: '/appointments', name: 'Appointments', component: Appointments, meta: { requiresAuth: true, role: ['doctor', 'receptionist'] } },
   { path: '/patients', name: 'Patients', component: Patients, meta: { requiresAuth: true, role: 'doctor' } },
   { path: '/agendas', name: 'Agendas', component: Agendas, meta: { requiresAuth: true, role: 'receptionist' } },

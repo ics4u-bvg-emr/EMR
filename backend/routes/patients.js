@@ -74,7 +74,9 @@ router.post('/patients', async (req, res) => {
                 currentPrescriptions: req.body.medicalHistory.currentPrescriptions || [],
                 familyHistory: req.body.medicalHistory.familyHistory || [],
                 notes: req.body.medicalHistory.notes
-            }})
+            }}),
+            ...(req.body.profilePicture && { profilePicture: req.body.profilePicture }),
+
         });
 
         const savedPatient = await patient.save();

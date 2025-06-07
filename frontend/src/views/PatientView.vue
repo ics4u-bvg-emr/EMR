@@ -5,7 +5,9 @@
     <div v-else>
       <!-- Header -->
       <div class="header-row">
-        <div class="avatar"></div>
+        <div class="avatar">
+          <img :src="patient.profilePicture" class="profile-pic" />
+        </div>
         <div>
           <h2 class="patient-name">{{ patient.firstName }} {{ patient.lastName }}</h2>
           <div class="patient-meta">
@@ -305,6 +307,14 @@ const formatDate = (dateStr) => {
 const formatDateTime = (datetimeStr) => {
   return dayjs(datetimeStr).format('MMM D, YYYY h:mm A');
 };
+
+const togglePastAppointments = () =>{
+  if(showPastAppointments.value){
+    showPastAppointments.value = false;
+  }else{
+    showPastAppointments.value = true;
+  }
+}
 
 // Sorted appointments
 const sortedAppointments = computed(() => {
