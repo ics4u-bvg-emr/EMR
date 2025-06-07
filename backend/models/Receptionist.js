@@ -18,6 +18,8 @@ const receptionistSchema = new mongoose.Schema({
   verificationToken: String,
   resetToken: String,
   resetTokenExpires: Date,
+
+  profilePhoto: { type: String },
 });
 
 const Receptionist = mongoose.model('Receptionist', receptionistSchema);
