@@ -12,7 +12,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Sidebar from '@/components/Sidebar.vue'
 import TabBar from '@/components/TabBar.vue'
@@ -68,6 +68,10 @@ const publicRoutes = [
 const isPublicRoute = computed(() => publicRoutes.includes(route.name))
 
 // You may want to fetch the real user info here as you already do in your onMounted
+
+onMounted(() => {
+  tabsStore.restoreTabs()
+})
 </script>
 
 <style>

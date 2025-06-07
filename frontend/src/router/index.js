@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { jwtDecode } from 'jwt-decode'
+import axios from 'axios'
 
 import Home from '@/views/Home.vue'
 import Login from '@/views/Login.vue'
@@ -16,6 +17,7 @@ import RegisterDoctor from '@/views/RegisterDoctor.vue'
 import RegisterReceptionist from '@/views/RegisterReceptionist.vue'
 import RequestPasswordReset from '@/views/RequestPasswordReset.vue'
 import ResetPassword from '@/views/ResetPassword.vue'
+import { useTabsStore } from '@/stores/tabs'
 
 const routes = [
   {
@@ -95,6 +97,37 @@ router.beforeEach((to, from, next) => {
   }
 
   next()
+})
+
+router.afterEach(async (to, from) => {
+  const tabsStore = useTabsStore()
+  // Open a patient tab if route is PatientEdit
+  if (to.name === 'PatientEdit' && to.params.id) {
+    const patientId = to.params.id
+    // Check if the tab already exists
+    const tabKey = `patient-${patientId}`
+    const existingTab = tabsStore.tabs.find(tab => tab.key === tabKey)
+    if (!existingTab) {
+      // Fetch patient name from API
+      let title = `Patient ${patientId}`
+      try {
+        const res = await axios.get(`/api/patients/${patientId}`)
+        const patient = res.data
+        if (patient && patient.firstName && patient.lastName) {
+          title = `${patient.firstName} ${patient.lastName}`
+        }
+      } catch (e) {
+        // fallback to id if fetch fails
+      }
+      tabsStore.openTab({
+        key: tabKey,
+        title,
+        route: { name: 'PatientEdit', params: { id: patientId } },
+        closeable: true
+      })
+    }
+  }
+  // Add similar logic for other tabbed views if needed
 })
 
 export default router

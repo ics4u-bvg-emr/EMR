@@ -84,7 +84,7 @@
             <p class="title is-6 mb-3">News & Updates</p>
             <ul>
               <li v-for="update in recentUpdates" :key="update.id">
-                <strong>{{ update.patientName }}</strong> – 
+                <strong>{{ update.patientName }}</strong> –
                 <em>{{ update.updateName }}</em>
                 <span class="has-text-grey ml-2">
                   ({{ new Date(update.updatedAt).toLocaleDateString() }})
@@ -188,8 +188,11 @@ onMounted(async () => {
 
   newMessages.value = 11
 
-  const todayCount = todaysAppointments.value.length
-  const updateCount = recentUpdates.value.length
+  // Move notification logic here, after data is loaded
+  const todayCount = (todaysAppointments?.value || []).length
+  const updateCount = (recentUpdates?.value || []).length
+
+  notifications.value = [] // clear previous notifications
 
   if (todayCount >= 6) {
     notifications.value.push(`Busy day: ${todayCount} appointments scheduled`)

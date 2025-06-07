@@ -1,5 +1,8 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
+
+const TABS_KEY = 'openTabs'
+const ACTIVE_TAB_KEY = 'activeTabKey'
 
 export const useTabsStore = defineStore('tabs', () => {
   // The default tab is always present and uncloseable
@@ -12,6 +15,27 @@ export const useTabsStore = defineStore('tabs', () => {
     }
   ])
   const activeTabKey = ref('home')
+
+  // Restore tabs from localStorage
+  function restoreTabs() {
+    const savedTabs = localStorage.getItem(TABS_KEY)
+    const savedActive = localStorage.getItem(ACTIVE_TAB_KEY)
+    if (savedTabs) {
+      try {
+        const parsed = JSON.parse(savedTabs)
+        if (Array.isArray(parsed) && parsed.length) {
+          tabs.value = parsed
+        }
+      } catch {}
+    }
+    if (savedActive) activeTabKey.value = savedActive
+  }
+
+  // Save tabs to localStorage on change
+  watch([tabs, activeTabKey], () => {
+    localStorage.setItem(TABS_KEY, JSON.stringify(tabs.value))
+    localStorage.setItem(ACTIVE_TAB_KEY, activeTabKey.value)
+  }, { deep: true })
 
   function openTab({ key, title, route, closeable = true }) {
     if (!tabs.value.find(tab => tab.key === key)) {
@@ -44,5 +68,5 @@ export const useTabsStore = defineStore('tabs', () => {
     tabs.value.find(tab => tab.key === activeTabKey.value)
   )
 
-  return { tabs, activeTabKey, openTab, closeTab, setActiveTab, activeTab }
+  return { tabs, activeTabKey, openTab, closeTab, setActiveTab, activeTab, restoreTabs }
 })
