@@ -39,21 +39,21 @@
         <div class="column is-two-thirds">
           <div class="box">
             <h3 class="title is-5">Personal Details</h3>
-                        <div class="field">
+            <div class="field">
               <label class="label">Full Name</label>
               <div class="control">
                 <input v-if="isEditing" class="input" type="text" v-model="user.fullName" />
                 <p v-else class="is-size-5">{{ user.fullName }}</p>
               </div>
             </div>
-                        <div class="field">
+            <div class="field">
               <label class="label">Username / ID</label>
               <div class="control">
                 <input v-if="isEditing" class="input" type="text" v-model="user.username" />
                 <p v-else class="is-size-5">{{ user.username }}</p>
               </div>
             </div>
-            <div class="field">
+            <div class="field" v-if="role === 'doctor'">
               <label class="label">Gender</label>
               <div class="control">
                 <div v-if="isEditing" class="select">
@@ -66,14 +66,14 @@
                 <p v-else class="is-size-5">{{ user.gender }}</p>
               </div>
             </div>
-            <div class="field">
+            <div class="field" v-if="role === 'doctor'">
               <label class="label">Date of Birth</label>
               <div class="control">
                 <input v-if="isEditing" class="input" type="date" v-model="user.dob" />
                 <p v-else class="is-size-5">{{ user.dob }}</p>
               </div>
             </div>
-            <div class="field">
+            <div class="field" v-if="role === 'doctor'">
               <label class="label">Bio</label>
               <div class="control">
                 <textarea v-if="isEditing" class="textarea" v-model="user.bio"></textarea>
@@ -91,14 +91,7 @@
                 <p v-else class="is-size-5">{{ user.email }}</p>
               </div>
             </div>
-            <div class="field">
-              <label class="label">Phone Number</label>
-              <div class="control">
-                <input v-if="isEditing" class="input" type="tel" v-model="user.phone" />
-                <p v-else class="is-size-5">{{ user.phone }}</p>
-              </div>
-            </div>
-            <div class="field">
+            <div class="field" v-if="role === 'doctor'">
               <label class="label">Work Address / Clinic Location</label>
               <div class="control">
                 <input v-if="isEditing" class="input" type="text" v-model="user.address" />
@@ -107,7 +100,7 @@
             </div>
           </div>
 
-          <div class="box">
+          <div class="box" v-if="role === 'doctor'">
             <h3 class="title is-5">Professional Details</h3>
             <div class="field">
               <label class="label">Specialty</label>
@@ -142,7 +135,7 @@
             </div>
           </div>
 
-          <div class="box">
+          <div class="box" v-if="role === 'doctor'">
             <h3 class="title is-5">Schedule</h3>
             <div class="field">
               <label class="label">Clinic Hours / Work Days</label>
@@ -183,6 +176,8 @@ import { setUserRole } from '@/stores/user.js';
 const router = useRouter();
 const isEditing = ref(false);
 const fileName = ref('');
+let doctorId = null;
+let role = '';
 
 const user = reactive({
   fullName: '',
@@ -202,42 +197,21 @@ const user = reactive({
   patientLoad: 0
 });
 
-// auth stuffs
 const token = localStorage.getItem('token');
-let doctorId = null;
 
 onMounted(async () => {
-  if (!token) {
-    router.push('/login');
-    return;
-  }
-
-  let decoded;
-  try {
-    decoded = JSON.parse(atob(token.split('.')[1]));
-  } catch {
-    router.push('/login');
-    return;
-  }
-
-  const { id, role } = decoded;
-  doctorId = id;
-
-  if (!id || !role) {
-    router.push('/login');
-    return;
-  }
+  if (!token) return router.push('/login');
 
   try {
-    let res;
-    if (role === 'doctor') {
-      res = await axios.get(`/api/doctors/${id}`, { headers: { Authorization: `Bearer ${token}` } });
-    } else if (role === 'receptionist') {
-      res = await axios.get(`/api/receptionists/${id}`, { headers: { Authorization: `Bearer ${token}` } });
-    } else {
-      router.push('/login');
-      return;
-    }
+    const decoded = JSON.parse(atob(token.split('.')[1]));
+    doctorId = decoded.id;
+    role = decoded.role;
+    setUserRole(role);
+
+    const endpoint = role === 'doctor' ? 'doctors' : 'receptionists';
+    const res = await axios.get(`/api/${endpoint}/${doctorId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
 
     const data = res.data;
     user.fullName = `${data.firstName} ${data.lastName}`;
@@ -255,18 +229,12 @@ onMounted(async () => {
     user.onCall = data.onCall || false;
     user.hours = data.hours || '';
     user.patientLoad = data.patientLoad || 0;
-
-    setUserRole(role);
   } catch (err) {
-    if (err.response && err.response.status === 401) {
-      router.push('/login');
-    } else {
-      console.error('Failed to load profile:', err);
-    }
+    console.error('Failed to load profile:', err);
+    router.push('/login');
   }
 });
 
-//image upload also evil... glhf
 async function onImageChange(event) {
   const file = event.target.files[0];
   if (!file) return;
@@ -278,7 +246,8 @@ async function onImageChange(event) {
   formData.append('photo', file);
 
   try {
-    const res = await axios.put(`/api/doctors/${doctorId}/profile-photo`, formData, {
+    const endpoint = role === 'doctor' ? 'doctors' : 'receptionists';
+    const res = await axios.put(`/api/${endpoint}/${doctorId}/profile-photo`, formData, {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'multipart/form-data'
@@ -290,7 +259,6 @@ async function onImageChange(event) {
   }
 }
 
-//edit mode (kinda evil? might be working idk ^_^ :3)
 function handleEditToggle() {
   if (isEditing.value) saveProfile();
   isEditing.value = !isEditing.value;
@@ -305,28 +273,36 @@ async function saveProfile() {
       firstName,
       lastName,
       username: user.username,
-      gender: user.gender,
-      dob: user.dob,
       email: user.email,
-      phone: user.phone,
-      bio: user.bio,
       address: user.address,
-      specialization: user.specialty,
-      experience: user.experience,
-      certifications: user.certifications,
-      onCall: user.onCall,
-      hours: user.hours,
-      patientLoad: user.patientLoad
     };
 
-    await axios.put(`/api/doctors/${doctorId}`, updatedData, { headers: { Authorization: `Bearer ${token}` } });
+    if (role === 'doctor') {
+      Object.assign(updatedData, {
+        gender: user.gender,
+        dob: user.dob,
+        phone: user.phone,
+        bio: user.bio,
+        specialization: user.specialty,
+        experience: user.experience,
+        certifications: user.certifications,
+        onCall: user.onCall,
+        hours: user.hours,
+        patientLoad: user.patientLoad,
+      });
+    }
+
+    const endpoint = role === 'doctor' ? 'doctors' : 'receptionists';
+    await axios.put(`/api/${endpoint}/${doctorId}`, updatedData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
     console.log('Profile saved.');
   } catch (err) {
     console.error('Failed to save profile:', err);
   }
 }
 
-// Logout
+
 function logout() {
   localStorage.removeItem('token');
   setUserRole(null);
